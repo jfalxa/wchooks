@@ -40,10 +40,10 @@ This function is for example the one you get from `import { render } from "lit-h
 The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`
 
 ```typescript
-export function Component<T>(
+function Component<T>(
   renderer: () => T,
   render: (templateResult: T, root: HTMLElement) => void,
-  options: ComponentOptions
+  options?: ComponentOptions
 ): CustomElementConstructor;
 ```
 
@@ -152,6 +152,8 @@ function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
 Creates a wrapper around an async function that allows tracking the evolution of the async operation while preventing racing conditions between consecutive calls.
 
 ```typescript
+type PromiseType<P> = P extends Promise<infer T> ? T : never;
+
 interface Async<F extends Fn> {
   loading: boolean;
   value: PromiseType<ReturnType<F>> | undefined;
@@ -162,6 +164,7 @@ interface Async<F extends Fn> {
 interface AsyncFn {
   (...args: any[]): Promise<any>;
 }
+
 
 function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
 ```
@@ -181,7 +184,7 @@ When given the `get` option, the attribute DOM string will be parsed with it whe
 When given the `set` option, the attribute value will be stringified with it when written to the dom.
 
 ```typescript
-export interface AttributeOptions<T> {
+interface AttributeOptions<T> {
   get?: (attribute: string) => T;
   set?: (value: T) => string;
 }
@@ -213,8 +216,8 @@ interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }
 
-function useEvent<K extends keyof HTMLElementEventMap>(
-  name: K,
+function useEvent<E extends keyof HTMLElementEventMap>(
+  name: E,
   options?: EventInit
 ): DispatchEvent<undefined>;
 
@@ -272,7 +275,7 @@ interface LifeCycleCallbackWithClear {
   (element: HTMLElement): void | (() => void);
 }
 
-export function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
+function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 ```
 
 ### onRendered
@@ -280,11 +283,7 @@ export function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): vo
 This hook behaves exactly the same as onUpdated except it runs the callback only after an update is finally rendered to the DOM
 
 ```typescript
-interface LifeCycleCallbackWithClear {
-  (element: HTMLElement): void | (() => void);
-}
-
-export function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
+function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 ```
 
 ## Life cycle hooks without clear method
