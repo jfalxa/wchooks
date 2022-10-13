@@ -4,17 +4,14 @@
   "author": "jfalxa",
   "license": "ISC",
   "description": "Hooks for webcomponents",
+  "homepage": "https://github.com/jfalxa/wchooks#readme",
   "main": "wchooks.js",
   "types": "./wchooks.d.ts",
-  "scripts": {
-    "example": "npx serve example"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jfalxa/wchooks.git"
   },
-  "bugs": {
-    "url": "https://github.com/jfalxa/wchooks/issues"
-  },
-  "homepage": "https://github.com/jfalxa/wchooks#readme"
+  "scripts": {
+    "example": "npx serve example"
+  }
 }
