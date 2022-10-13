@@ -33,11 +33,11 @@ customElements.define("my-counter", Component(Counter, render));
 
 The `Component` factory is the function used to build an HTMLElement that can work with hooks.
 
-It's first argument should be a renderer function that can run hooks and returns a value that can be rendered with the `render` function passed as second argument.
+Its first argument should be a renderer function that can run hooks and returns a value that can be rendered with the `render` function passed as second argument.
 
 This function is for example the one you get from `import { render } from "lit-html"`, it works in tandem with the `html` function also exported by `lit-html`.
 
-The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`
+The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
 
 ```typescript
 function Component<T>(
@@ -69,7 +69,7 @@ interface ComponentOptions {
 
 [→ See the example](/example/components/ref.js)
 
-Create a reference to an object that will remain at the same address for the whole life of the component. The value is then accessible through `ref.value`
+Create a reference to an object that will remain at the same address for the whole life of the component. The value is then accessible through `ref.value`.
 
 ```typescript
 interface Ref<T> {
@@ -96,7 +96,7 @@ function useState<T>(initialState: T): [T, Setter<T>];
 
 ### useReducer
 
-Create a state managed by a reducer/dispatcher combo
+Create a state managed by a reducer/dispatcher combo.
 
 ```typescript
 interface Reducer<T, A> {
@@ -263,7 +263,7 @@ For a full example of life cycle hooks, please consult the [lifecycle example sc
 
 ### onUpdated
 
-The callback will be called after an update (modification of state, property, attribute, etc), but before it's applied to the DOM
+The callback will be called after an update (modification of state, property, attribute, etc), but before it's applied to the DOM.
 
 Then, it will be called again every time the deps change.
 
@@ -279,7 +279,7 @@ function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
 ### onRendered
 
-This hook behaves exactly the same as onUpdated except it runs the callback only after an update is finally rendered to the DOM
+This hook behaves exactly the same as onUpdated except it runs the callback only after an update is finally rendered to the DOM.
 
 ```typescript
 function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
