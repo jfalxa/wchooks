@@ -1,14 +1,17 @@
-export function Component(renderer: Renderer, options: ComponentOptions): CustomElementConstructor;
+export function Component<T>(
+  renderer: () => T,
+  render: (templateResult: T, root: HTMLElement) => void,
+  options: ComponentOptions
+): CustomElementConstructor;
 
-export interface Renderer {
-  (): any;
+export interface Renderer<T> {
+  (): T;
 }
 
 export interface ComponentOptions {
   attachRoot?: (element: HTMLElement) => Element;
   Element?: typeof HTMLElement;
   observedAttributes?: string[];
-  render: Function;
 }
 
 export interface Ref<T> {
@@ -17,30 +20,45 @@ export interface Ref<T> {
 
 export function useRef<T>(initialValue?: T): Ref<T>;
 
-export function useConstant<T>(createConstant: T): T;
-
 export function useMemoize<T>(createValue: () => T, deps: Deps): T;
 
-export function useMemoizeFn<T>(fn: T, deps: Deps): T;
+export interface Fn {
+  (...args: any[]): any;
+}
 
-interface Reducer<T, A> {
+export function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
+
+export interface Async<F extends Fn> {
+  loading: boolean;
+  value: PromiseType<ReturnType<F>> | undefined;
+  error: Error | undefined;
+  call: F;
+}
+
+export interface AsyncFn {
+  (...args: any[]): Promise<any>;
+}
+
+export function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
+
+export interface Reducer<T, A> {
   (state: T, action: A): T;
 }
 
-interface Dispatch<A> {
+export interface Dispatch<A> {
   (action: A): void;
 }
 
 export function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch<A>];
 
-interface Setter<T> {
+export interface Setter<T> {
   (value: T): void;
   (value: (oldValue: T) => T): void;
 }
 
 export function useState<T>(initialState: T): [T, Setter<T>];
 
-interface AttributeOptions<T> {
+export interface AttributeOptions<T> {
   get?: (attribute: string) => T;
   set?: (value: T) => string;
 }
@@ -49,20 +67,22 @@ export function useAttribute<T>(attribute: string, options?: AttributeOptions<T>
 
 export function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
-interface DispatchEvent {
-  (options?: CustomEventInit): CustomEvent;
+export function useStyle(css: string): void;
+
+export interface DispatchEvent<T> {
+  (options?: CustomEventInit<T>): CustomEvent;
 }
 
 export function useEvent<K extends keyof HTMLElementEventMap>(
   name: K,
   options?: EventInit
-): DispatchEvent;
+): DispatchEvent<undefined>;
 
-export function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent;
+export function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent<T>;
 
-export function useEventListener<K extends keyof HTMLElementEventMap>(
-  name: K,
-  listener: (this: HTMLElement, event: HTMLElementEventMap[K]) => any,
+export function useEventListener<E extends keyof HTMLElementEventMap>(
+  name: E,
+  listener: (this: HTMLElement, event: HTMLElementEventMap[E]) => any,
   deps?: Deps,
   options?: boolean | AddEventListenerOptions
 ): void;
@@ -74,14 +94,14 @@ export function useEventListener(
   options?: boolean | AddEventListenerOptions
 ): void;
 
-interface LifeCycleHook {
-  (callback: (element: HTMLElement) => Function | void): void;
+interface LifeCycleCallback {
+  (element: HTMLElement): void;
 }
 
-export const onCreated: LifeCycleHook;
-export const onConnected: LifeCycleHook;
-export const onAdopted: LifeCycleHook;
-export const onDisconnected: LifeCycleHook;
+export function onCreated(createdCallback: LifeCycleCallback): void;
+export function onConnected(coonectedCallback: LifeCycleCallback): void;
+export function onAdopted(adoptedCallback: LifeCycleCallback): void;
+export function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
 
 export function onAttributeChanged(
   callback: (
@@ -92,11 +112,11 @@ export function onAttributeChanged(
   ) => void
 ): void;
 
-interface LifeCycleHookWithDeps {
-  (callback: (element: HTMLElement) => void | (() => void), deps?: Deps): void;
+interface LifeCycleCallbackWithClear {
+  (element: HTMLElement): void | (() => void);
 }
 
-export const onUpdated: LifeCycleHookWithDeps;
-export const onRendered: LifeCycleHookWithDeps;
+export function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
+export function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
-export type Deps = any[] | { deps: any; hasChanged: (deps: any, oldDeps: any) => boolean };
+type PromiseType<P> = P extends Promise<infer T> ? T : never;

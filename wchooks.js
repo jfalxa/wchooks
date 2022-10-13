@@ -11,6 +11,7 @@ export function Component(renderer, options) {
       super();
       this.#root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
       this.render(); // dry run the renderer so we register the first hooks
+      this.appendStyles(); // create the required style tag as soon as the component is created
       this.runLifeCycleCallbacks("created", this);
     }
 
@@ -55,17 +56,15 @@ export function Component(renderer, options) {
     runLifeCycleCallbacks(step, ...args) {
       for (const hook of this.#hooks) {
         if (hook instanceof Object && step in hook) {
-          const run = hook[step][0];
-          run?.(...args);
+          hook[step][0]?.(...args); // run lifecycle side effect
         }
       }
     }
 
-    clearLifeCycleCallbacks(step, ...args) {
+    clearLifeCycleCallbacks(step) {
       for (const hook of this.#hooks) {
         if (hook instanceof Object && step in hook) {
-          const clear = hook[step][1];
-          clear?.(...args);
+          hook[step][1]?.(); // clear lifecycleside effect
         }
       }
     }
@@ -73,6 +72,14 @@ export function Component(renderer, options) {
     render = () => {
       HookContext.setHookContext(this);
       return renderer();
+    };
+
+    appendStyles = () => {
+      for (const hook of this.#hooks) {
+        if (hook instanceof Object && hook[0] instanceof HTMLStyleElement) {
+          this.#root.append(hook[0]);
+        }
+      }
     };
 
     update = () => {
@@ -89,15 +96,9 @@ export function useRef(initialValue) {
   return context.registerHook(index, { value: initialValue });
 }
 
-export function useConstant(createConstant) {
-  const ref = useRef();
-  if (ref.value === undefined) ref.value = createConstant();
-  return ref.value;
-}
-
-export function useMemoize(createValue, deps) {
+export function useMemoize(createValue, deps = []) {
   const [index, context] = HookContext.getHookContext();
-  const [oldValue, oldDeps] = context.getHook(index) ?? [createValue()];
+  const [oldValue, oldDeps] = context.getHook(index) ?? [createValue()]; // only create the value if it was undefined
 
   if (hasChangedDeps(deps, oldDeps)) {
     context.setHook(index, [createValue(), deps]);
@@ -107,8 +108,38 @@ export function useMemoize(createValue, deps) {
   return context.registerHook(index, [oldValue, oldDeps])[0];
 }
 
-export function useMemoizeFn(fn, deps) {
+export function useMemoizeFn(fn, deps = []) {
   return useMemoize(() => fn, deps);
+}
+
+export function useAsync(asyncFn, deps) {
+  const cancelPrevious = useRef();
+
+  const [state, commit] = useReducer(
+    { loading: false, value: undefined, error: undefined },
+    (oldState, newState) => ({ ...oldState, ...newState })
+  );
+
+  const callAsyncFn = useMemoizeFn(async (...args) => {
+    let cancelled = false;
+    cancelPrevious.value?.(); // cancel previous call so it cannot update the state later
+    cancelPrevious.value = () => (cancelled = true); // prepare the cancel function for the current call
+
+    try {
+      if (!cancelled) commit({ loading: true });
+      const value = await asyncFn(...args);
+      if (!cancelled) commit({ loading: false, error: undefined, value });
+      return value;
+    } catch (error) {
+      if (!cancelled) commit({ loading: false, value: undefined, error });
+    }
+  }, deps);
+
+  return { ...state, call: callAsyncFn };
+}
+
+export function useState(initialState) {
+  return useReducer(initialState, (oldState, state) => resolveData(state, oldState));
 }
 
 export function useReducer(initialState, reducer) {
@@ -122,10 +153,6 @@ export function useReducer(initialState, reducer) {
   }
 
   return context.registerHook(index, [initialState, dispatch]);
-}
-
-export function useState(initialState) {
-  return useReducer(initialState, (oldState, state) => resolveData(state, oldState));
 }
 
 export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
@@ -180,9 +207,34 @@ export function useEventListener(name, callback, deps, options) {
   }, deps);
 }
 
+export function useStyle(css) {
+  const style = useMemoize(() => document.createElement("style"));
+  onUpdated(() => { style.textContent = css }, [css]); // prettier-ignore
+}
+
 function useLifeCycle(step, sideEffect) {
   const [index, context] = HookContext.getHookContext();
   context.setHook(index, { [step]: [sideEffect] });
+}
+
+export function onCreated(createdCallback) {
+  useLifeCycle("created", createdCallback);
+}
+
+export function onAttributeChanged(attributeChangedCallback) {
+  useLifeCycle("attributeChanged", attributeChangedCallback);
+}
+
+export function onAdopted(adoptedCallback) {
+  useLifeCycle("adopted", adoptedCallback);
+}
+
+export function onConnected(connectedCallback) {
+  useLifeCycle("connected", connectedCallback);
+}
+
+export function onDisconnected(disconnectedCallback) {
+  useLifeCycle("disconnected", disconnectedCallback);
 }
 
 function useLifeCycleWithDeps(step, sideEffect, deps) {
@@ -203,32 +255,12 @@ function useLifeCycleWithDeps(step, sideEffect, deps) {
   context.setHook(index, { [step]: [_sideEffect, clearOldSideEffect, oldDeps] });
 }
 
-export function onCreated(createdCallback) {
-  useLifeCycle("created", createdCallback);
-}
-
-export function onConnected(connectedCallback) {
-  useLifeCycle("connected", connectedCallback);
-}
-
-export function onAdopted(adoptedCallback) {
-  useLifeCycle("adopted", adoptedCallback);
-}
-
-export function onAttributeChanged(attributeChangedCallback) {
-  useLifeCycle("attributeChanged", attributeChangedCallback);
-}
-
 export function onUpdated(updatedCallback, deps) {
   useLifeCycleWithDeps("updated", updatedCallback, deps);
 }
 
 export function onRendered(renderedCallback, deps) {
   useLifeCycleWithDeps("rendered", renderedCallback, deps);
-}
-
-export function onDisconnected(disconnectedCallback) {
-  useLifeCycle("disconnected", disconnectedCallback);
 }
 
 function createHookContext() {
@@ -240,7 +272,6 @@ function createHookContext() {
       index++, //
       hookContext,
     ],
-
     setHookContext: (element) => {
       index = 0;
       hookContext = element;
@@ -256,11 +287,9 @@ function observeProperty(element, property, defaultValue) {
 
   Object.defineProperty(element, property, {
     enumerable: true,
-
     get() {
       return element[_property];
     },
-
     set(value) {
       element[_property] = value;
       element.update();
