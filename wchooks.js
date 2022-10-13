@@ -4,29 +4,30 @@ export function Component(renderer, render, options = {}) {
   return class HookElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
-    #root;
-    #hooks = [];
+    _root;
+    _hooks = [];
+    _updateRequested = false;
 
     constructor() {
       super();
-      this.#root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
+      this._root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
       this.render(); // dry run the renderer so we register the first hooks
       this.appendStyles(); // create the required style tag as soon as the component is created
       this.runLifeCycleCallbacks("created", this);
     }
 
     connectedCallback() {
-      this.update();
+      this.requestUpdate();
       this.runLifeCycleCallbacks("connected", this);
     }
 
     adoptedCallback() {
-      this.update();
+      this.requestUpdate();
       this.runLifeCycleCallbacks("adopted", this);
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-      this.update();
+      this.requestUpdate();
       this.runLifeCycleCallbacks("attributeChanged", this, name, oldValue, newValue);
     }
 
@@ -37,24 +38,24 @@ export function Component(renderer, render, options = {}) {
     }
 
     getHook = (index) => {
-      return this.#hooks[index];
+      return this._hooks[index];
     };
 
     setHook = (index, data) => {
-      this.#hooks[index] = data;
-      return this.#hooks[index];
+      this._hooks[index] = data;
+      return this._hooks[index];
     };
 
     registerHook = (index, data) => {
       // only update the hook if it was non-existent
-      if (this.#hooks[index] === undefined) {
-        this.#hooks[index] = data;
+      if (this._hooks[index] === undefined) {
+        this._hooks[index] = data;
       }
-      return this.#hooks[index];
+      return this._hooks[index];
     };
 
     runLifeCycleCallbacks(step, ...args) {
-      for (const hook of this.#hooks) {
+      for (const hook of this._hooks) {
         if (hook instanceof Object && step in hook) {
           hook[step][0]?.(...args); // run lifecycle side effect
         }
@@ -62,31 +63,39 @@ export function Component(renderer, render, options = {}) {
     }
 
     clearLifeCycleCallbacks(step) {
-      for (const hook of this.#hooks) {
+      for (const hook of this._hooks) {
         if (hook instanceof Object && step in hook) {
           hook[step][1]?.(); // clear lifecycleside effect
         }
       }
     }
 
-    render = () => {
-      HookContext.setHookContext(this);
-      return renderer();
+    appendStyles = () => {
+      for (const hook of this._hooks) {
+        if (hook instanceof Object && hook[0] instanceof HTMLStyleElement) {
+          this._root.append(hook[0]);
+        }
+      }
     };
 
-    appendStyles = () => {
-      for (const hook of this.#hooks) {
-        if (hook instanceof Object && hook[0] instanceof HTMLStyleElement) {
-          this.#root.append(hook[0]);
-        }
+    requestUpdate = async () => {
+      if (!this._updateRequested) {
+        this._updateRequested = true;
+        this._updateRequested = await false;
+        this.update();
       }
     };
 
     update = () => {
       const templateResult = this.render();
       this.runLifeCycleCallbacks("updated", this);
-      render(templateResult, this.#root);
+      render(templateResult, this._root);
       this.runLifeCycleCallbacks("rendered", this);
+    };
+
+    render = () => {
+      HookContext.setHookContext(this);
+      return renderer();
     };
   };
 }
@@ -149,7 +158,7 @@ export function useReducer(initialState, reducer) {
     const [oldState, _dispatch] = context.getHook(index);
     const state = reducer(oldState, action);
     context.setHook(index, [state, _dispatch]);
-    context.update();
+    context.requestUpdate();
   }
 
   return context.registerHook(index, [initialState, dispatch]);
@@ -292,7 +301,7 @@ function observeProperty(element, property, defaultValue) {
     },
     set(value) {
       element[_property] = value;
-      element.update();
+      element.requestUpdate();
     },
   });
 }

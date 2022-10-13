@@ -1,4 +1,3 @@
-// @ts-check
 import { html, render } from "https://unpkg.com/lit-html";
 import { Component, onConnected, useState } from "../wchooks.js";
 
@@ -11,7 +10,7 @@ import "./components/state.js";
 import "./components/style.js";
 import "./components/async.js";
 
-function App() {
+function ExampleApp() {
   const [myAttr, setMyAttr] = useState(12);
   const [myProp, setMyProp] = useState([1]);
 
@@ -42,4 +41,4 @@ function App() {
   `;
 }
 
-customElements.define("example-app", Component(App, render));
+customElements.define("example-app", Component(ExampleApp, render));
