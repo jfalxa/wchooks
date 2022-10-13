@@ -116,9 +116,12 @@ function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch
 
 Only recreate the value when the deps change.
 
+
 The "deps" used in this hook and some other can be given in two forms:
 - as an array: each item in the array will be shallow compared to its previous version to find out if the deps have changed.
 - as a special object `{ deps, hasChanged: (deps, oldDeps) => boolean }`: The `hasChanged` function will be used to check if the deps are different
+
+Providing no deps will create the value only once in the whole life of the component.
 
 ```typescript
 interface DepsOptions {
@@ -165,7 +168,7 @@ interface AsyncFn {
   (...args: any[]): Promise<any>;
 }
 
-function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
+function useAsync<F extends AsyncFn>(asyncFn: F, deps?: Deps): Async<F>;
 ```
 
 ## HTMLElement control hooks
@@ -265,7 +268,7 @@ For a full example of life cycle hooks, please consult the [lifecycle example sc
 
 The callback will be called after an update (modification of state, property, attribute, etc), but before it's applied to the DOM.
 
-Then, it will be called again every time the deps change.
+Then, it will be called again every time the deps change. Providing no deps will make the hook run the callback on every render.
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
