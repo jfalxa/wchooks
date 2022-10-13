@@ -8,7 +8,7 @@ Hooks tailored for web components, inspired by https://github.com/matthewp/haunt
 
 ```js
 import { html, render } from "lit-html"
-import { useState, onRendered } from "wchooks"
+import { Component, useState, onRendered } from "wchooks"
 
 const Counter = () => {
   const [counter, setCounter] = useState(0)
