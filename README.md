@@ -154,7 +154,7 @@ Creates a wrapper around an async function that allows tracking the evolution of
 ```typescript
 type PromiseType<P> = P extends Promise<infer T> ? T : never;
 
-interface Async<F extends Fn> {
+interface Async<F extends AsyncFn> {
   loading: boolean;
   value: PromiseType<ReturnType<F>> | undefined;
   error: Error | undefined;
@@ -164,7 +164,6 @@ interface Async<F extends Fn> {
 interface AsyncFn {
   (...args: any[]): Promise<any>;
 }
-
 
 function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
 ```
