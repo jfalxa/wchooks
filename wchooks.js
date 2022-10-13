@@ -1,6 +1,6 @@
 const HookContext = createHookContext();
 
-export function Component(renderer, options) {
+export function Component(renderer, render, options = {}) {
   return class HookElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
@@ -85,7 +85,7 @@ export function Component(renderer, options) {
     update = () => {
       const templateResult = this.render();
       this.runLifeCycleCallbacks("updated", this);
-      options.render(templateResult, this.#root);
+      render(templateResult, this.#root);
       this.runLifeCycleCallbacks("rendered", this);
     };
   };

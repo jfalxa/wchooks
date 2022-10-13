@@ -107,5 +107,5 @@ function ExampleNestedLifeCycle() {
 
 customElements.define(
   "example-nested-life-cycle",
-  Component(ExampleNestedLifeCycle, { render, observedAttributes: ["value"] })
+  Component(ExampleNestedLifeCycle, render, { observedAttributes: ["value"] })
 );

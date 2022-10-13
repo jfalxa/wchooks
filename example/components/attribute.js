@@ -23,5 +23,5 @@ function ExampleAttribute() {
 
 customElements.define(
   "example-attribute",
-  Component(ExampleAttribute, { render, observedAttributes: ["my-attr"] })
+  Component(ExampleAttribute, render, { observedAttributes: ["my-attr"] })
 );

@@ -1,7 +1,7 @@
 export function Component<T>(
   renderer: () => T,
   render: (templateResult: T, root: HTMLElement) => void,
-  options: ComponentOptions
+  options?: ComponentOptions
 ): CustomElementConstructor;
 
 export interface Renderer<T> {
@@ -67,8 +67,6 @@ export function useAttribute<T>(attribute: string, options?: AttributeOptions<T>
 
 export function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
-export function useStyle(css: string): void;
-
 export interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }
@@ -98,6 +96,8 @@ interface LifeCycleCallback {
   (element: HTMLElement): void;
 }
 
+export function useStyle(css: string): void;
+
 export function onCreated(createdCallback: LifeCycleCallback): void;
 export function onConnected(coonectedCallback: LifeCycleCallback): void;
 export function onAdopted(adoptedCallback: LifeCycleCallback): void;
@@ -120,3 +120,10 @@ export function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): vo
 export function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
 type PromiseType<P> = P extends Promise<infer T> ? T : never;
+
+interface DepsOptions {
+  deps: any;
+  hasChanged: (deps: any, oldDeps: any) => boolean;
+}
+
+type Deps = any[] | DepsOptions;
