@@ -26,11 +26,21 @@ function ExampleState() {
     [counter]
   );
 
+  function increment() {
+    setCounter((counter) => counter + 1);
+    setCounter((counter) => counter + 1);
+    setCounter((counter) => counter + 1);
+  }
+
+  function decrement() {
+    setCounter((counter) => counter - 1);
+  }
+
   return html`
     <div>
       <b>COUNTER </b>
-      <button @click=${() => setCounter(counter + 1)}>+</button>
-      <button @click=${() => setCounter(counter - 1)}>-</button>
+      <button @click=${increment}>+</button>
+      <button @click=${decrement}>-</button>
       <span>= <span id="counter">${counter}</span> (last changed: ${lastChanged})</span>
     </div>
   `;
