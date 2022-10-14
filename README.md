@@ -85,6 +85,8 @@ function useRef<T>(initialValue?: T): Ref<T>;
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
+Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useAttribute` and `useProperty`.
+
 ```typescript
 interface Setter<T> {
   (value: T): void;
