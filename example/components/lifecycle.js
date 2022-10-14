@@ -5,7 +5,6 @@ import {
   onCreated,
   onDisconnected,
   onRendered,
-  onUpdated,
   Component,
 } from "../../wchooks.js";
 
@@ -17,12 +16,6 @@ function ExampleLifeCycle() {
 
   onAttributeChanged((element, name, oldValue, newValue) => {
     console.log("[LIFECYCLE] AttributeChanged", { name, oldValue, newValue }, element);
-  });
-
-  // add a callback to be run just after an update, before rendering
-  onUpdated((element) => {
-    console.log("[LIFECYCLE] Updated", element);
-    return () => console.log("[LIFECYCLE] Updated clear previous", element);
   });
 
   // add a callback to be run just after the update has been rendered to the dom
@@ -70,12 +63,6 @@ function ExampleNestedLifeCycle() {
 
   onAttributeChanged((element, name, oldValue, newValue) => {
     console.log("[LIFECYCLE NESTED] AttributeChanged", { name, oldValue, newValue }, element);
-  });
-
-  // add a callback to be run just after an update, before rendering
-  onUpdated((element) => {
-    console.log("[LIFECYCLE NESTED] Updated", element);
-    return () => console.log("[LIFECYCLE NESTED] Updated: clear previous", element);
   });
 
   // add a callback to be run just after the update has been rendered to the dom

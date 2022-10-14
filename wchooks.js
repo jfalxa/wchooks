@@ -11,7 +11,7 @@ export function Component(renderer, render, options = {}) {
     constructor() {
       super();
       this._root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
-      this.render(); // dry run the renderer so we register the first hooks
+      this.callRenderer(); // dry run the renderer so we register the first hooks
       this.appendStyles(); // create the required style tag as soon as the component is created
       this.runLifeCycleCallbacks("created", this);
     }
@@ -34,7 +34,6 @@ export function Component(renderer, render, options = {}) {
     disconnectedCallback() {
       this.runLifeCycleCallbacks("disconnected", this);
       this.clearLifeCycleCallbacks("rendered");
-      this.clearLifeCycleCallbacks("updated");
     }
 
     getHook = (index) => {
@@ -80,21 +79,25 @@ export function Component(renderer, render, options = {}) {
     requestUpdate = async () => {
       if (!this._updateRequested) {
         this._updateRequested = true;
-        this._updateRequested = await false; // defer the execution of the function starting from here
+        await Promise.resolve(); // defer the execution of the function starting from here
+        this._updateRequested = false;
         this.update(); // that way update() will be called only after all other sync operations are done
       }
     };
 
-    update = () => {
-      const templateResult = this.render();
-      this.runLifeCycleCallbacks("updated", this);
-      render(templateResult, this._root);
+    update = async () => {
+      this.render();
       this.runLifeCycleCallbacks("rendered", this);
     };
 
-    render = () => {
+    callRenderer = () => {
       HookContext.setHookContext(this);
       return renderer();
+    };
+
+    render = () => {
+      const templateResult = this.callRenderer();
+      return render(templateResult, this._root);
     };
   };
 }
@@ -220,7 +223,7 @@ export function useEventListener(name, callback, deps, options) {
 export function useStyle(css) {
   const [index, context] = HookContext.getHookContext();
   const style = context.registerHook(index, "style", () => document.createElement("style"));
-  onUpdated(() => { style.textContent = css }, [css]); // prettier-ignore
+  onRendered(() => { style.textContent = css }, [css]); // prettier-ignore
 }
 
 function useLifeCycle(step, callback) {
@@ -249,10 +252,11 @@ export function onDisconnected(disconnectedCallback) {
   useLifeCycle("disconnected", disconnectedCallback);
 }
 
-function useLifeCycleWithDeps(step, sideEffect, deps) {
+export function onRendered(sideEffect, deps) {
   const [index, context] = HookContext.getHookContext();
-
   const previous = context.registerHook(index, "lifecycle", () => ({}));
+
+  const step = "rendered";
 
   function callback(...args) {
     // rerun side effect if at least one dep has changed
@@ -264,14 +268,6 @@ function useLifeCycleWithDeps(step, sideEffect, deps) {
   }
 
   context.setHook(index, { step, callback, deps });
-}
-
-export function onUpdated(updatedCallback, deps) {
-  useLifeCycleWithDeps("updated", updatedCallback, deps);
-}
-
-export function onRendered(renderedCallback, deps) {
-  useLifeCycleWithDeps("rendered", renderedCallback, deps);
 }
 
 function createHookContext() {

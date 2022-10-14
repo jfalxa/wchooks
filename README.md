@@ -266,11 +266,13 @@ function useStyle(css: string): void;
 
 For a full example of life cycle hooks, please consult the [lifecycle example script](/example/components/lifecycle.js).
 
-### onUpdated
+### onRendered
 
-The callback will be called after an update (modification of state, property, attribute, etc), but before it's applied to the DOM.
+The callback will be called right after an update (modification of state, property, attribute, etc) is rendered to the DOM.
 
-Then, it will be called again every time the deps change. Providing no deps will make the hook run the callback on every render.
+Every time the deps change, it will be called again.
+
+Providing no deps will make the hook run the callback on every render.
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
@@ -279,14 +281,6 @@ interface LifeCycleCallbackWithClear {
   (element: HTMLElement): void | (() => void);
 }
 
-function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
-```
-
-### onRendered
-
-This hook behaves exactly the same as onUpdated except it runs the callback only after an update is finally rendered to the DOM.
-
-```typescript
 function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 ```
 

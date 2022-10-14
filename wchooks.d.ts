@@ -92,7 +92,7 @@ export function useEventListener(
   options?: boolean | AddEventListenerOptions
 ): void;
 
-interface LifeCycleCallback {
+export interface LifeCycleCallback {
   (element: HTMLElement): void;
 }
 
@@ -116,7 +116,6 @@ interface LifeCycleCallbackWithClear {
   (element: HTMLElement): void | (() => void);
 }
 
-export function onUpdated(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 export function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
 type PromiseType<P> = P extends Promise<infer T> ? T : never;
