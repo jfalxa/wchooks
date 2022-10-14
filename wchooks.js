@@ -38,42 +38,41 @@ export function Component(renderer, render, options = {}) {
     }
 
     getHook = (index) => {
-      return this._hooks[index];
+      return this._hooks[index].data;
     };
 
     setHook = (index, data) => {
-      this._hooks[index] = data;
-      return this._hooks[index];
+      this._hooks[index].data = data;
     };
 
-    registerHook = (index, data) => {
+    registerHook = (index, type, createData) => {
       // only update the hook if it was non-existent
       if (this._hooks[index] === undefined) {
-        this._hooks[index] = data;
+        this._hooks[index] = { type, data: createData() };
       }
-      return this._hooks[index];
+      return this.getHook(index);
     };
 
     runLifeCycleCallbacks(step, ...args) {
       for (const hook of this._hooks) {
-        if (hook instanceof Object && step in hook) {
-          hook[step][0]?.(...args); // run lifecycle side effect
+        if (hook.type === "lifecycle" && hook.data.step === step) {
+          hook.data.callback?.(...args);
         }
       }
     }
 
     clearLifeCycleCallbacks(step) {
       for (const hook of this._hooks) {
-        if (hook instanceof Object && step in hook) {
-          hook[step][1]?.(); // clear lifecycleside effect
+        if (hook.type === "lifecycle" && hook.data.step === step) {
+          hook.data.clearSideEffect?.();
         }
       }
     }
 
     appendStyles = () => {
       for (const hook of this._hooks) {
-        if (hook instanceof Object && hook[0] instanceof HTMLStyleElement) {
-          this._root.append(hook[0]);
+        if (hook.type === "style") {
+          this._root.append(hook.data);
         }
       }
     };
@@ -81,8 +80,8 @@ export function Component(renderer, render, options = {}) {
     requestUpdate = async () => {
       if (!this._updateRequested) {
         this._updateRequested = true;
-        this._updateRequested = await false;
-        this.update();
+        this._updateRequested = await false; // defer the execution of the function starting from here
+        this.update(); // that way update() will be called only after all other sync operations are done
       }
     };
 
@@ -102,19 +101,19 @@ export function Component(renderer, render, options = {}) {
 
 export function useRef(initialValue) {
   const [index, context] = HookContext.getHookContext();
-  return context.registerHook(index, { value: initialValue });
+  return context.registerHook(index, "ref", () => ({ value: initialValue }));
 }
 
 export function useMemoize(createValue, deps = []) {
   const [index, context] = HookContext.getHookContext();
-  const [oldValue, oldDeps] = context.getHook(index) ?? [createValue()]; // only create the value if it was undefined
+  const previous = context.registerHook(index, "memoize", () => ({ value: createValue() }));
 
-  if (hasChangedDeps(deps, oldDeps)) {
-    context.setHook(index, [createValue(), deps]);
+  if (hasChangedDeps(deps, previous.deps)) {
+    context.setHook(index, { value: createValue(), deps });
   }
 
-  // register hook and extract the actual value from current hook cache
-  return context.registerHook(index, [oldValue, oldDeps])[0];
+  // register hook and extrat the actual value from current hook cache
+  return context.getHook(index).value;
 }
 
 export function useMemoizeFn(fn, deps = []) {
@@ -161,22 +160,23 @@ export function useReducer(initialState, reducer) {
     context.requestUpdate();
   }
 
-  return context.registerHook(index, [initialState, dispatch]);
+  return context.registerHook(index, "reducer", () => [initialState, dispatch]);
 }
 
 export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
   const [index, context] = HookContext.getHookContext();
 
-  function setAttribute(value) {
-    const oldValue = get(context.getAttribute(attribute));
-    const nextValue = resolveData(value, oldValue);
-    context.setAttribute(attribute, set(nextValue));
-  }
-
   const value = get(context.getAttribute(attribute));
-  const hook = context.registerHook(index, { setAttribute });
 
-  return [value, hook.setAttribute];
+  const setAttribute = context.registerHook(index, "attribute", () => {
+    return function setAttribute(value) {
+      const oldValue = get(context.getAttribute(attribute));
+      const nextValue = resolveData(value, oldValue);
+      context.setAttribute(attribute, set(nextValue));
+    };
+  });
+
+  return [value, setAttribute];
 }
 
 export function useProperty(property, initialValue) {
@@ -185,28 +185,29 @@ export function useProperty(property, initialValue) {
   // as soon as the component is created, setup a proxy to the prop to allow tracking its updates
   onCreated(() => observeProperty(context, property, initialValue));
 
-  function setProperty(value) {
-    const oldValue = context[property];
-    const nextValue = resolveData(value, oldValue);
-    context[property] = nextValue;
-  }
-
   const value = context[property] ?? initialValue;
-  const hook = context.registerHook(index, { setProperty });
 
-  return [value, hook.setProperty];
+  const setProperty = context.registerHook(index, "property", () => {
+    return function setProperty(value) {
+      const oldValue = context[property];
+      const nextValue = resolveData(value, oldValue);
+      context[property] = nextValue;
+    };
+  });
+
+  return [value, setProperty];
 }
 
 export function useEvent(name, options) {
   const [index, context] = HookContext.getHookContext();
 
-  function dispatchEvent(eventOptions) {
-    const event = new CustomEvent(name, { ...options, ...eventOptions });
-    context.dispatchEvent(event);
-    return event;
-  }
-
-  return context.registerHook(index, dispatchEvent);
+  return context.registerHook(index, "event", () => {
+    return function dispatchEvent(eventOptions) {
+      const event = new CustomEvent(name, { ...options, ...eventOptions });
+      context.dispatchEvent(event);
+      return event;
+    };
+  });
 }
 
 export function useEventListener(name, callback, deps, options) {
@@ -217,13 +218,15 @@ export function useEventListener(name, callback, deps, options) {
 }
 
 export function useStyle(css) {
-  const style = useMemoize(() => document.createElement("style"));
+  const [index, context] = HookContext.getHookContext();
+  const style = context.registerHook(index, "style", () => document.createElement("style"));
   onUpdated(() => { style.textContent = css }, [css]); // prettier-ignore
 }
 
-function useLifeCycle(step, sideEffect) {
+function useLifeCycle(step, callback) {
   const [index, context] = HookContext.getHookContext();
-  context.setHook(index, { [step]: [sideEffect] });
+  context.registerHook(index, "lifecycle", () => ({ step, callback }));
+  context.setHook(index, { step, callback }); // update the callback function on every render
 }
 
 export function onCreated(createdCallback) {
@@ -249,19 +252,18 @@ export function onDisconnected(disconnectedCallback) {
 function useLifeCycleWithDeps(step, sideEffect, deps) {
   const [index, context] = HookContext.getHookContext();
 
-  const hook = context.getHook(index) ?? { [step]: [] };
-  const [_, clearOldSideEffect, oldDeps] = hook[step];
+  const previous = context.registerHook(index, "lifecycle", () => ({}));
 
-  function _sideEffect(...args) {
+  function callback(...args) {
     // rerun side effect if at least one dep has changed
-    if (hasChangedDeps(deps, oldDeps)) {
-      if (clearOldSideEffect) clearOldSideEffect();
+    if (hasChangedDeps(deps, previous.deps)) {
+      previous.clearSideEffect?.();
       const clearSideEffect = sideEffect(...args);
-      context.setHook(index, { [step]: [_sideEffect, clearSideEffect, deps] });
+      context.setHook(index, { step, callback, clearSideEffect, deps });
     }
   }
 
-  context.setHook(index, { [step]: [_sideEffect, clearOldSideEffect, oldDeps] });
+  context.setHook(index, { step, callback, deps });
 }
 
 export function onUpdated(updatedCallback, deps) {
