@@ -6,6 +6,7 @@
   "description": "Hooks for webcomponents",
   "homepage": "https://github.com/jfalxa/wchooks#readme",
   "main": "wchooks.js",
+  "type": "module",
   "types": "./wchooks.d.ts",
   "repository": {
     "type": "git",
