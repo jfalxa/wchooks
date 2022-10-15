@@ -1,6 +1,6 @@
 {
   "name": "wchooks",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "author": "jfalxa",
   "license": "ISC",
   "description": "Hooks for webcomponents",
