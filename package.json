@@ -10,6 +10,7 @@
   "types": "wchooks.d.ts",
   "files": [
     "wchooks.js",
+    "wchooks.mjs",
     "wchooks.d.ts"
   ],
   "repository": {
