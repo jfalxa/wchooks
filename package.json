@@ -5,14 +5,29 @@
   "license": "ISC",
   "description": "Hooks for webcomponents",
   "homepage": "https://github.com/jfalxa/wchooks#readme",
-  "main": "wchooks.js",
   "type": "module",
-  "types": "./wchooks.d.ts",
+  "main": "dist/wchooks.js",
+  "module": "dist/wchooks.mjs",
+  "umd:main": "dist/wchooks.umd.js",
+  "unpkg": "dist/wchooks.und.js",
+  "source": "lib/wchooks.mjs",
+  "types": "lib/wchooks.d.ts",
+  "files": [
+    "lib",
+    "dist"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jfalxa/wchooks.git"
   },
   "scripts": {
-    "example": "npx serve example"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest test/*",
+    "prepublish": "npm run build"
+  },
+  "devDependencies": {
+    "vite": "^3.1.8"
   }
 }
