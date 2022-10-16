@@ -237,7 +237,7 @@ function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
 ### useMethod
 
-[→ See the example](/docs/components/attribute.js)
+[→ See the example](/docs/components/method.js)
 
 Add a new method to the custom element object.
 It is useful if you want the dom element to expose an imperative API that has access to the private parts of the component like state and refs.
