@@ -1,8 +1,11 @@
 name: Publish package to npm
 
 on:
-  release:
-    types: [created]
+  push:
+    branches:
+      - main
+    tags:
+      - v*
 
 jobs:
   build:
