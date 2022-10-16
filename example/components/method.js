@@ -33,7 +33,7 @@ function ExampleMethod() {
 
   return html`
     <button @click=${toggleCheckbox}>Toggle checkbox</button>
-    <input type="checkbox" ?checked=${active} />
+    <input type="checkbox" .checked=${active} @change=${(e) => setActive(e.target.checked)} />
     ${active ? "ON" : "OFF"}
   `;
 }
