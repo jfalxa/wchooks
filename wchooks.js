@@ -201,6 +201,19 @@ export function useProperty(property, initialValue) {
   return [value, setProperty];
 }
 
+export function useMethod(method, fn, deps) {
+  // memoize the function according to deps
+  const methodFn = useMemoizeFn(fn, deps);
+
+  // as soon as the component is created, add the method to the html element
+  onCreated((element) => (element[method] = methodFn));
+
+  // then update the method every time the deps change
+  onRendered((element) => (element[method] = methodFn), [methodFn]);
+
+  return methodFn;
+}
+
 export function useEvent(name, options) {
   const [index, context] = HookContext.getHookContext();
 

@@ -67,6 +67,8 @@ export function useAttribute<T>(attribute: string, options?: AttributeOptions<T>
 
 export function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
+export function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
+
 export interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }

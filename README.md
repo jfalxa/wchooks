@@ -7,27 +7,26 @@ Hooks tailored for web components, inspired by https://github.com/matthewp/haunt
 → Check the [example app script](/example/app.js) for a more complete demo.
 
 ```js
-import { html, render } from "lit-html"
-import { Component, useState, onRendered } from "wchooks"
+import { html, render } from "lit-html";
+import { Component, useState, onRendered } from "wchooks";
 
 const Counter = () => {
-  const [counter, setCounter] = useState(0)
+  const [counter, setCounter] = useState(0);
 
   onRendered(() => {
-    console.log('counter rendered:', counter)
-  }, [counter])
+    console.log("counter rendered:", counter);
+  }, [counter]);
 
   return html`
     <div>
       <span>counter: ${counter}</span>
       <button @click=${() => setCounter(counter + 1)}>Increment</button>
     </div>
-  `
-}
+  `;
+};
 
 customElements.define("my-counter", Component(Counter, render));
 ```
-
 
 ## Component factory
 
@@ -47,9 +46,39 @@ function Component<T>(
 ): CustomElementConstructor;
 ```
 
+## List of hooks
+
+### Data hooks
+
+1. [useRef](#useref)
+2. [useState](#usestate)
+3. [useReducer](#usereducer)
+4. [useMemoize](#usememoize)
+5. [useMemoizeFn](#usememoizefn)
+6. [useAsync](#useasync)
+
+### HTMLElement hooks
+
+7. [useAttribute](#useattribute)
+8. [useProperty](#useproperty)
+9. [useMethod](#usemethod)
+10. [useEvent](#useevent)
+11. [useEventListener](#useeventlistener)
+12. [useStyle](#usestyle)
+
+### Lifecycle hooks
+
+13. [onRendered](#onrendered)
+14. [onCreated](#oncreated)
+15. [onConnected](#onconnected)
+16. [onDisconnected](#ondisconnected)
+17. [onAttributeChanged](#onattributechanged)
+18. [onAdopted](#onadopted)
+
 ### Options
 
 You also have a few other options to customize the behavior of your component:
+
 - `observedAttributes`: List of attributes that should trigger a rerender in your component when they change
 - `attachRoot`: Pick a rendering root different than the default open `shadowRoot`
 - `Element`: Specify another class than HTMLElement that your component should extend
@@ -61,7 +90,6 @@ interface ComponentOptions {
   observedAttributes?: string[];
 }
 ```
-
 
 ## Data hooks
 
@@ -79,7 +107,7 @@ interface Ref<T> {
 function useRef<T>(initialValue?: T): Ref<T>;
 ```
 
-###  useState
+### useState
 
 [→ See the example](/example/components/state.js)
 
@@ -118,8 +146,8 @@ function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch
 
 Only recreate the value when the deps change.
 
-
 The "deps" used in this hook and some other can be given in two forms:
+
 - as an array: each item in the array will be shallow compared to its previous version to find out if the deps have changed.
 - as a special object `{ deps, hasChanged: (deps, oldDeps) => boolean }`: The `hasChanged` function will be used to check if the deps are different
 
@@ -128,10 +156,10 @@ Providing no deps will create the value only once in the whole life of the compo
 ```typescript
 interface DepsOptions {
   deps: any;
-  hasChanged: (deps: any, oldDeps: any) => boolean
+  hasChanged: (deps: any, oldDeps: any) => boolean;
 }
 
-type Deps = any[] | DepsOptions
+type Deps = any[] | DepsOptions;
 
 function useMemoize<T>(createValue: () => T, deps: Deps): T;
 ```
@@ -173,7 +201,7 @@ interface AsyncFn {
 function useAsync<F extends AsyncFn>(asyncFn: F, deps?: Deps): Async<F>;
 ```
 
-## HTMLElement control hooks
+## HTMLElement hooks
 
 ### useAttribute
 
@@ -205,6 +233,14 @@ Returns the current value of the property along with a setter.
 
 ```typescript
 function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
+```
+
+### useMethod
+
+Similar to setProperty
+
+```typescript
+function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
 ```
 
 ### useEvent
@@ -326,7 +362,12 @@ The callback will be called inside attributeChangedCallback(), so every time an 
 
 ```typescript
 function onAttributeChanged(
-  callback: (element: HTMLElement,name: string, oldValue: string | null, newValue: string | null) => void
+  callback: (
+    element: HTMLElement,
+    name: string,
+    oldValue: string | null,
+    newValue: string | null
+  ) => void
 ): void;
 ```
 
@@ -337,4 +378,3 @@ The callback will be called inside adoptedCallback(), when the component changes
 ```typescript
 function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
 ```
-
