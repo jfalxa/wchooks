@@ -1,7 +1,7 @@
-const HookContext = createHookContext();
+const Hooks = createHookContext();
 
 export function Component(renderer, render, options = {}) {
-  return class HookElement extends (options.Element ?? HTMLElement) {
+  return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
     _root;
@@ -91,7 +91,7 @@ export function Component(renderer, render, options = {}) {
     };
 
     callRenderer = () => {
-      HookContext.setHookContext(this);
+      Hooks.setContext(this);
       return renderer();
     };
 
@@ -103,20 +103,20 @@ export function Component(renderer, render, options = {}) {
 }
 
 export function useRef(initialValue) {
-  const [index, context] = HookContext.getHookContext();
-  return context.registerHook(index, "ref", () => ({ value: initialValue }));
+  const [index, element] = Hooks.getContext();
+  return element.registerHook(index, "ref", () => ({ value: initialValue }));
 }
 
 export function useMemoize(createValue, deps = []) {
-  const [index, context] = HookContext.getHookContext();
-  const previous = context.registerHook(index, "memoize", () => ({ value: createValue() }));
+  const [index, element] = Hooks.getContext();
+  const previous = element.registerHook(index, "memoize", () => ({ value: createValue() }));
 
   if (hasChangedDeps(deps, previous.deps)) {
-    context.setHook(index, { value: createValue(), deps });
+    element.setHook(index, { value: createValue(), deps });
   }
 
   // register hook and extrat the actual value from current hook cache
-  return context.getHook(index).value;
+  return element.getHook(index).value;
 }
 
 export function useMemoizeFn(fn, deps = []) {
@@ -154,28 +154,28 @@ export function useState(initialState) {
 }
 
 export function useReducer(initialState, reducer) {
-  const [index, context] = HookContext.getHookContext();
+  const [index, element] = Hooks.getContext();
 
   function dispatch(action) {
-    const [oldState, _dispatch] = context.getHook(index);
+    const [oldState, _dispatch] = element.getHook(index);
     const state = reducer(oldState, action);
-    context.setHook(index, [state, _dispatch]);
-    context.requestUpdate();
+    element.setHook(index, [state, _dispatch]);
+    element.requestUpdate();
   }
 
-  return context.registerHook(index, "reducer", () => [initialState, dispatch]);
+  return element.registerHook(index, "reducer", () => [initialState, dispatch]);
 }
 
 export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
-  const [index, context] = HookContext.getHookContext();
+  const [index, element] = Hooks.getContext();
 
-  const value = get(context.getAttribute(attribute));
+  const value = get(element.getAttribute(attribute));
 
-  const setAttribute = context.registerHook(index, "attribute", () => {
+  const setAttribute = element.registerHook(index, "attribute", () => {
     return function setAttribute(value) {
-      const oldValue = get(context.getAttribute(attribute));
+      const oldValue = get(element.getAttribute(attribute));
       const nextValue = resolveData(value, oldValue);
-      context.setAttribute(attribute, set(nextValue));
+      element.setAttribute(attribute, set(nextValue));
     };
   });
 
@@ -183,18 +183,18 @@ export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
 }
 
 export function useProperty(property, initialValue) {
-  const [index, context] = HookContext.getHookContext();
+  const [index, element] = Hooks.getContext();
 
   // as soon as the component is created, setup a proxy to the prop to allow tracking its updates
-  onCreated(() => observeProperty(context, property, initialValue));
+  onCreated(() => observeProperty(element, property, initialValue));
 
-  const value = context[property] ?? initialValue;
+  const value = element[property] ?? initialValue;
 
-  const setProperty = context.registerHook(index, "property", () => {
+  const setProperty = element.registerHook(index, "property", () => {
     return function setProperty(value) {
-      const oldValue = context[property];
+      const oldValue = element[property];
       const nextValue = resolveData(value, oldValue);
-      context[property] = nextValue;
+      element[property] = nextValue;
     };
   });
 
@@ -205,7 +205,7 @@ export function useMethod(method, fn, deps) {
   // memoize the function according to deps
   const methodFn = useMemoizeFn(fn, deps);
 
-  // as soon as the component is created, add the method to the html element
+  // as soon as the component is created, add the method to the element
   onCreated((element) => (element[method] = methodFn));
 
   // then update the method every time the deps change
@@ -215,12 +215,12 @@ export function useMethod(method, fn, deps) {
 }
 
 export function useEvent(name, options) {
-  const [index, context] = HookContext.getHookContext();
+  const [index, element] = Hooks.getContext();
 
-  return context.registerHook(index, "event", () => {
+  return element.registerHook(index, "event", () => {
     return function dispatchEvent(eventOptions) {
       const event = new CustomEvent(name, { ...options, ...eventOptions });
-      context.dispatchEvent(event);
+      element.dispatchEvent(event);
       return event;
     };
   });
@@ -234,15 +234,15 @@ export function useEventListener(name, callback, deps, options) {
 }
 
 export function useStyle(css) {
-  const [index, context] = HookContext.getHookContext();
-  const style = context.registerHook(index, "style", () => document.createElement("style"));
+  const [index, element] = Hooks.getContext();
+  const style = element.registerHook(index, "style", () => document.createElement("style"));
   onRendered(() => { style.textContent = css }, [css]); // prettier-ignore
 }
 
 function useLifeCycle(step, callback) {
-  const [index, context] = HookContext.getHookContext();
-  context.registerHook(index, "lifecycle", () => ({ step, callback }));
-  context.setHook(index, { step, callback }); // update the callback function on every render
+  const [index, element] = Hooks.getContext();
+  element.registerHook(index, "lifecycle", () => ({ step, callback }));
+  element.setHook(index, { step, callback }); // update the callback function on every render
 }
 
 export function onCreated(createdCallback) {
@@ -266,8 +266,8 @@ export function onDisconnected(disconnectedCallback) {
 }
 
 export function onRendered(sideEffect, deps) {
-  const [index, context] = HookContext.getHookContext();
-  const previous = context.registerHook(index, "lifecycle", () => ({}));
+  const [index, element] = Hooks.getContext();
+  const previous = element.registerHook(index, "lifecycle", () => ({}));
 
   const step = "rendered";
 
@@ -276,25 +276,25 @@ export function onRendered(sideEffect, deps) {
     if (hasChangedDeps(deps, previous.deps)) {
       previous.clearSideEffect?.();
       const clearSideEffect = sideEffect(...args);
-      context.setHook(index, { step, callback, clearSideEffect, deps });
+      element.setHook(index, { step, callback, clearSideEffect, deps });
     }
   }
 
-  context.setHook(index, { step, callback, deps });
+  element.setHook(index, { step, callback, deps: previous.deps });
 }
 
 function createHookContext() {
   let index = 0;
-  let hookContext = undefined;
+  let element = undefined;
 
   return {
-    getHookContext: () => [
+    getContext: () => [
       index++, //
-      hookContext,
+      element,
     ],
-    setHookContext: (element) => {
+    setContext: (el) => {
       index = 0;
-      hookContext = element;
+      element = el;
     },
   };
 }
