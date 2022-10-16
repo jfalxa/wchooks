@@ -6,7 +6,7 @@ import {
   onDisconnected,
   onRendered,
   Component,
-} from "../../wchooks.js";
+} from "../../lib/wchooks.mjs";
 
 function ExampleLifeCycle() {
   // add a callback to be run during the constructor call

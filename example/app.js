@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState } from "../wchooks.js";
+import { Component, onConnected, useState } from "../lib/wchooks.mjs";
 
 import "./components/attribute.js";
 import "./components/event.js";
