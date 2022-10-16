@@ -237,7 +237,10 @@ function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
 ### useMethod
 
-Similar to setProperty
+Add a new method to the custom element so it can be accessed imperatively when manipulating the dom element itself.
+
+Deps can be specified if the function depends on the surrounding scope. 
+If there are no deps, the method will only be bound once during the element creation.
 
 ```typescript
 function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
