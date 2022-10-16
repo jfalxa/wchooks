@@ -6,7 +6,7 @@ import {
   onDisconnected,
   onRendered,
   Component,
-} from "https://unpkg.com/wchooks";
+} from "../../wchooks.mjs";
 
 function ExampleLifeCycle() {
   // add a callback to be run during the constructor call
@@ -39,14 +39,14 @@ function ExampleLifeCycle() {
   }
 
   return html`
-    <div>
-      <b>LIFECYCLE</b>
+    <fieldset>
+      <legend><b>Lifecycle callbacks</b></legend>
       <button @click=${(e) => removeHostFromDocument(e.target)}>
-        ✕ Remove this block from document
+        Remove this block from document
       </button>
-      <example-nested-life-cycle></example-nested-life-cycle>
       <span>→ check console for lifecycle callbacks</span>
-    </div>
+      <example-nested-life-cycle></example-nested-life-cycle>
+    </fieldset>
   `;
 }
 
@@ -86,9 +86,13 @@ function ExampleNestedLifeCycle() {
   }
 
   return html`
-    <button @click=${(e) => removeHostFromDocument(e.target)}>
-      ✕ Remove this nested button from its parent
-    </button>
+    <fieldset style="margin-top: 8px">
+      <legend>nested element</legend>
+      <button @click=${(e) => removeHostFromDocument(e.target)}>
+        Remove this element from its parent
+      </button>
+      <span>→ compare the lifecycle order with the parent</span>
+    </fieldset>
   `;
 }
 

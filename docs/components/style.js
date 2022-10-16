@@ -1,28 +1,31 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState, useStyle } from "https://unpkg.com/wchooks";
+import { Component, useState, useStyle } from "../../wchooks.mjs";
 
 function ExampleStyle() {
   const [size, setSize] = useState(16);
 
   useStyle(`
-    .title {
+    .text {
       font-weight: bold;
       font-size: ${size}px;
     }
   `);
 
-  // set the font size to 32px after 1s
-  onConnected(() => {
-    setTimeout(() => {
-      setSize(32);
-    }, 1000);
-  });
-
   return html`
-    <div>
-      <b>STYLE</b>
-      <span class="title">Styled title (size: ${size}px)</span>
-    </div>
+    <fieldset>
+      <legend><b>useStyle</b></legend>
+
+      <label>Set text size:</label>
+      <input
+        placeholder="Text size"
+        type="number"
+        size="2"
+        .value=${size}
+        @input=${(e) => setSize(e.target.value)}
+      />
+
+      <span class="text" style="margin-left: 8px">Text with dynamic size</span>
+    </fieldset>
   `;
 }
 

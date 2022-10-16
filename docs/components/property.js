@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat";
-import { Component, useMemoizeFn, useProperty } from "https://unpkg.com/wchooks";
+import { Component, useMemoizeFn, useProperty } from "../../wchooks.mjs";
 
 function ExampleProperty() {
   // setup the "myProp" property of the custom element,
@@ -25,13 +25,13 @@ function ExampleProperty() {
   }, myPropDeps);
 
   return html`
-    <div>
-      <b>PROPERTY "myProp"</b>
-      <button @click=${addMyPropItem}>+</button>
-      <button @click=${removeMyPropItem}>-</button>
+    <fieldset>
+      <legend><b>useProperty / useMemoizeFn</b></legend>
+      <button @click=${addMyPropItem}>Add</button>
+      <button @click=${removeMyPropItem}>Remove</button>
       <span>= [${repeat(myProp, (value) => html`<b>${value}</b>, `)}*]</span>
       <span>→ check window.appElement.myProp in console</span>
-    </div>
+    </fieldset>
   `;
 }
 

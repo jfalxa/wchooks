@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useAsync } from "https://unpkg.com/wchooks";
+import { Component, useAsync } from "../../wchooks.mjs";
 
 function ExampleAsync() {
   const todos = useAsync(async ({ delay }) => {
@@ -20,12 +20,11 @@ function ExampleAsync() {
     : todos.error?.message ?? "∅";
 
   return html`
-    <div>
-      <b>ASYNC</b>
-
+    <fieldset>
+      <legend><b>useAsync</b></legend>
       <button @click=${() => todos.call({ delay: 1000 })}>Fetch some data</button>
       <span>→ ${todos.loading ? "LOADING..." : summary}</span>
-    </div>
+    </fieldset>
   `;
 }
 

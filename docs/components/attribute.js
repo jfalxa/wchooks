@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onAttributeChanged, useAttribute } from "https://unpkg.com/wchooks";
+import { Component, onAttributeChanged, useAttribute } from "../../wchooks.mjs";
 
 function ExampleAttribute() {
   // control the "my-attr" attribute of the custom element (make sure to add it to observedAttributes)
@@ -13,11 +13,11 @@ function ExampleAttribute() {
   });
 
   return html`
-    <div>
-      <b>ATTRIBUTE "my-attr"</b>
+    <fieldset>
+      <legend><b>useAttribute</b></legend>
       <input type="number" value=${myAttr} @input=${(e) => setMyAttr(e.target.value)} />
-      <span>→ check dom to see the new attribute value</span>
-    </div>
+      <span>→ check dom to see the new "my-attr" attribute value</span>
+    </fieldset>
   `;
 }
 

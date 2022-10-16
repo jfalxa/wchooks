@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useEvent, useEventListener } from "https://unpkg.com/wchooks";
+import { Component, useEvent, useEventListener } from "../../wchooks.mjs";
 
 function ExampleEvent() {
   // create a function that dispatches the "custom-event" event
@@ -11,11 +11,13 @@ function ExampleEvent() {
   }); // can also have deps to avoid listener add/remove on every render
 
   return html`
-    <div>
-      <b>EVENT</b>
+    <fieldset>
+      <legend>
+        <b>useEvent / useEventListener</b>
+      </legend>
       <button @click=${() => dispatchEvent()}>Dispatch custom event</button>
       <span>→ check console for event logs</span>
-    </div>
+    </fieldset>
   `;
 }
 

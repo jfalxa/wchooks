@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState } from "https://unpkg.com/wchooks";
+import { Component, onConnected, useState, useStyle } from "../wchooks.mjs";
 
 import "./components/attribute.js";
 import "./components/event.js";
@@ -21,26 +21,21 @@ function ExampleApp() {
   });
 
   return html`
-    <fieldset style="margin-bottom: 32px; padding: 16px;">
-      <legend>${"<example-app>"}</legend>
+    <h1>Examples of wchooks components</h1>
+
+    <p>→ You can read the source code directly inside your browser's dev-tools.</p>
+
+    <section style="display: flex; flex-direction: column; gap: 24px;">
       <example-counter></example-counter>
-      <br />
       <example-event></example-event>
-      <br />
       <example-attribute my-attr=${myAttr}></example-attribute>
-      <br />
       <example-property .myProp=${myProp}></example-property>
-      <br />
       <example-dom-ref></example-dom-ref>
-      <br />
       <example-style></example-style>
-      <br />
       <example-async></example-async>
-      <br />
       <example-method-container></example-method-container>
-      <br />
       <example-life-cycle value="0"></example-life-cycle>
-    </fieldset>
+    </section>
   `;
 }
 

@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref";
-import { Component, useRef, useMethod, useState } from "https://unpkg.com/wchooks";
+import { Component, useRef, useMethod, useState } from "../../wchooks.mjs";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();
@@ -10,15 +10,15 @@ function ExampleMethodContainer() {
   }
 
   return html`
-    <div>
-      <b>METHOD</b>
+    <fieldset>
+      <legend><b>useMethod</b></legend>
       <button @click=${toggleCheckboxFromOutside}>Toggle checkbox from outside</button>
 
       <fieldset style="margin-top: 8px">
         <legend>child component with exposed method</legend>
         <example-method ${ref(methodRef)}></example-method>
       </fieldset>
-    </div>
+    </fieldset>
   `;
 }
 
