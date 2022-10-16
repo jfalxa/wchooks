@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref";
-import { Component, useRef, useMethod, useState } from "https://unpkg.com/wchooks?module";
+import { Component, useRef, useMethod, useState } from "https://unpkg.com/wchooks";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();
