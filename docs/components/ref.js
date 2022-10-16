@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref";
-import { Component, useRef } from "../../wchooks.mjs";
+import { Component, useRef } from "../wchooks.mjs";
 
 function ExampleDOMRef() {
   // create a static reference to a dom element (or any other value)

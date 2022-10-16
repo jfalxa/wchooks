@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useState, useStyle } from "../../wchooks.mjs";
+import { Component, useState, useStyle } from "../wchooks.mjs";
 
 function ExampleStyle() {
   const [size, setSize] = useState(16);

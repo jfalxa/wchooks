@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useEvent, useEventListener } from "../../wchooks.mjs";
+import { Component, useEvent, useEventListener } from "../wchooks.mjs";
 
 function ExampleEvent() {
   // create a function that dispatches the "custom-event" event

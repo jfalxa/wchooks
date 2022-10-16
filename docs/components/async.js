@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useAsync } from "../../wchooks.mjs";
+import { Component, useAsync } from "../wchooks.mjs";
 
 function ExampleAsync() {
   const todos = useAsync(async ({ delay }) => {
