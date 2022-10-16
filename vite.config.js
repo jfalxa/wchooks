@@ -4,12 +4,6 @@ import { defineConfig } from "vite";
 export default defineConfig({
   root: "docs",
 
-  resolve: {
-    alias: {
-      "https://unpkg.com/wchooks?module": "wchooks.mjs",
-    },
-  },
-
   build: {
     minify: true,
     outDir: "..",
