@@ -22,10 +22,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "test": "vitest test/*",
-    "prepublish": "npm run build"
+    "build": "vite build"
   },
   "devDependencies": {
     "vite": "^3.1.8"

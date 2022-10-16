@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat";
-import { Component, useMemoizeFn, useProperty } from "../../lib/wchooks.mjs";
+import { Component, useMemoizeFn, useProperty } from "https://unpkg.com/wchooks?module";
 
 function ExampleProperty() {
   // setup the "myProp" property of the custom element,
