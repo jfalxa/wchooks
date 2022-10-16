@@ -4,7 +4,7 @@ Hooks tailored for web components, inspired by https://github.com/matthewp/haunt
 
 ## Basic example
 
-→ Check the [example app script](/example/app.js) for a more complete demo.
+→ Check the [example app script](/docs/app.js) for a more complete demo.
 
 ```js
 import { html, render } from "lit-html";
@@ -95,7 +95,7 @@ interface ComponentOptions {
 
 ### useRef
 
-[→ See the example](/example/components/ref.js)
+[→ See the example](/docs/components/ref.js)
 
 Create a reference to an object that will remain at the same address for the whole life of the component. The value is then accessible through `ref.value`.
 
@@ -109,7 +109,7 @@ function useRef<T>(initialValue?: T): Ref<T>;
 
 ### useState
 
-[→ See the example](/example/components/state.js)
+[→ See the example](/docs/components/state.js)
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
@@ -142,7 +142,7 @@ function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch
 
 ### useMemoize
 
-[→ See the example](/example/components/state.js)
+[→ See the example](/docs/components/state.js)
 
 Only recreate the value when the deps change.
 
@@ -166,7 +166,7 @@ function useMemoize<T>(createValue: () => T, deps: Deps): T;
 
 ### useMemoizeFn
 
-[→ See the example](/example/components/property.js)
+[→ See the example](/docs/components/property.js)
 
 Only update the function scope when the deps change.
 
@@ -180,7 +180,7 @@ function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
 
 ### useAsync
 
-[→ See the example](/example/components/async.js)
+[→ See the example](/docs/components/async.js)
 
 Creates a wrapper around an async function that allows tracking the evolution of the async operation while preventing racing conditions between consecutive calls.
 
@@ -205,7 +205,7 @@ function useAsync<F extends AsyncFn>(asyncFn: F, deps?: Deps): Async<F>;
 
 ### useAttribute
 
-[→ See the example](/example/components/attribute.js)
+[→ See the example](/docs/components/attribute.js)
 
 Bind the component rendering to the given attribute and return the current value of the attribute along with a function to update it.
 
@@ -226,7 +226,7 @@ function useAttribute<T>(attribute: string, options?: AttributeOptions<T>): [T, 
 
 ### useProperty
 
-[→ See the example](/example/components/property.js)
+[→ See the example](/docs/components/property.js)
 
 Bind the component to the given property so it rerenders when it changes.
 Returns the current value of the property along with a setter.
@@ -237,7 +237,7 @@ function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
 ### useMethod
 
-[→ See the example](/example/components/attribute.js)
+[→ See the example](/docs/components/attribute.js)
 
 Add a new method to the custom element object.
 It is useful if you want the dom element to expose an imperative API that has access to the private parts of the component like state and refs.
@@ -251,7 +251,7 @@ function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
 
 ### useEvent
 
-[→ See the example](/example/components/event.js)
+[→ See the example](/docs/components/event.js)
 
 Create an event dispatcher function that when called will dispatch the specified event with the given options.
 
@@ -272,7 +272,7 @@ function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent<
 
 ### useEventListener
 
-[→ See the example](/example/components/event.js)
+[→ See the example](/docs/components/event.js)
 
 Add an event listener bound to the current component that will attach and detach itself automatically, following the component lifecycle and deps change.
 
@@ -294,7 +294,7 @@ function useEventListener(
 
 ### useStyle
 
-[→ See the example](/example/components/style.js)
+[→ See the example](/docs/components/style.js)
 
 Creates a style tag containing the given CSS and adds it to the component render root.
 
@@ -306,7 +306,7 @@ function useStyle(css: string): void;
 
 ## Life cycle hooks
 
-For a full example of life cycle hooks, please consult the [lifecycle example script](/example/components/lifecycle.js).
+For a full example of life cycle hooks, please consult the [lifecycle example script](/docs/components/lifecycle.js).
 
 ### onRendered
 
