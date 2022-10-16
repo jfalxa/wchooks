@@ -1,4 +1,4 @@
 .vscode
 node_modules
 dist
-wchooks.js
+/wchooks.js
