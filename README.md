@@ -1,10 +1,29 @@
 # WCHOOKS
 
+![](https://badgen.net/npm/v/wchooks)
+![](https://badgen.net/npm/types/wchooks)
+![](https://badgen.net/bundlephobia/minzip/wchooks)
+
 Hooks tailored for web components, inspired by https://github.com/matthewp/haunted
+
+## Description
+
+The core idea is similar to [React's hooks](https://reactjs.org/docs/hooks-intro.html) so you will feel at home if you're already familiar with them.
+
+How it departs from React is that those hooks are built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) in mind so, while trying to remain as small as possible, they also try to abstract the most common operations that are needed to build a usable custom element.
+
+Note that there are some constraints on how you can use hooks, for more information you can read the [Rules of Hooks](https://reactjs.org/docs/hooks-rules.html) of React.
+
+## Usage
+
+This library being published on npm, you can:
+- `npm install wchooks` if you are using a bundler
+- import the module from a CDN, e.g. `import { useState } from "https://unpkg.com/wchooks"`
+
 
 ## Basic example
 
-→ Check the [example app script](/docs/app.js) for a more complete demo.
+→ Check out the [example page](/docs/) for a more complete demo.
 
 ```js
 import { html, render } from "lit-html";
@@ -30,11 +49,11 @@ customElements.define("my-counter", Component(Counter, render));
 
 ## Component factory
 
-The `Component` factory is the function used to build an HTMLElement that can work with hooks.
+The `Component` factory is the function used to build a custom `HTMLElement` that can work with hooks.
 
-Its first argument should be a renderer function that can run hooks and returns a value that can be rendered with the `render` function passed as second argument.
+Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed as second argument.
 
-This function is for example the one you get from `import { render } from "lit-html"`, it works in tandem with the `html` function also exported by `lit-html`.
+This `render` function is for example the one you get from `import { render } from "lit-html"`. It works in tandem with the `html` function also exported by `lit-html`.
 
 The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
 
@@ -44,6 +63,22 @@ function Component<T>(
   render: (templateResult: T, root: HTMLElement) => void,
   options?: ComponentOptions
 ): CustomElementConstructor;
+```
+
+### Options
+
+You also have a few other options to customize the behavior of your component:
+
+- `observedAttributes`: List of attributes that should trigger a rerender in your component when they change
+- `attachRoot`: Pick a rendering root different than the default open `shadowRoot`
+- `Element`: Specify another class than HTMLElement that your component should extend
+
+```typescript
+interface ComponentOptions {
+  attachRoot?: (element: HTMLElement) => Element;
+  Element?: typeof HTMLElement;
+  observedAttributes?: string[];
+}
 ```
 
 ## List of hooks
@@ -74,22 +109,6 @@ function Component<T>(
 16. [onDisconnected](#ondisconnected)
 17. [onAttributeChanged](#onattributechanged)
 18. [onAdopted](#onadopted)
-
-### Options
-
-You also have a few other options to customize the behavior of your component:
-
-- `observedAttributes`: List of attributes that should trigger a rerender in your component when they change
-- `attachRoot`: Pick a rendering root different than the default open `shadowRoot`
-- `Element`: Specify another class than HTMLElement that your component should extend
-
-```typescript
-interface ComponentOptions {
-  attachRoot?: (element: HTMLElement) => Element;
-  Element?: typeof HTMLElement;
-  observedAttributes?: string[];
-}
-```
 
 ## Data hooks
 
