@@ -9,7 +9,7 @@
   "main": "dist/wchooks.js",
   "module": "dist/wchooks.mjs",
   "umd:main": "dist/wchooks.umd.js",
-  "unpkg": "dist/wchooks.und.js",
+  "unpkg": "dist/wchooks.umd.js",
   "source": "lib/wchooks.mjs",
   "types": "lib/wchooks.d.ts",
   "files": [
