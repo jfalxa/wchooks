@@ -1,20 +1,16 @@
 {
   "name": "wchooks",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "author": "jfalxa",
   "license": "ISC",
   "description": "Hooks for webcomponents",
   "homepage": "https://github.com/jfalxa/wchooks#readme",
   "type": "module",
-  "main": "dist/wchooks.cjs",
-  "module": "dist/wchooks.js",
-  "umd:main": "dist/wchooks.umd.cjs",
-  "unpkg": "dist/wchooks.umd.cjs",
-  "source": "lib/wchooks.mjs",
-  "types": "lib/wchooks.d.ts",
+  "main": "wchooks.js",
+  "types": "wchooks.d.ts",
   "files": [
-    "lib",
-    "dist"
+    "wchooks.js",
+    "wchooks.d.ts"
   ],
   "repository": {
     "type": "git",

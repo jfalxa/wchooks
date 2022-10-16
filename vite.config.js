@@ -2,14 +2,22 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
+  root: "example",
+
+  resolve: {
+    alias: {
+      "https://unpkg.com/wchooks?module": "wchooks.mjs",
+    },
+  },
+
   build: {
     minify: true,
-    emptyOutDir: true,
+    outDir: "..",
 
     lib: {
-      name: "wchooks",
-      entry: resolve(__dirname, "lib/wchooks.mjs"),
-      formats: ["es", "cjs", "umd"],
+      entry: resolve(__dirname, "wchooks.mjs"),
+      fileName: () => "wchooks.js",
+      formats: ["es"],
     },
   },
 });
