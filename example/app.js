@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState } from "../lib/wchooks.mjs";
+import { Component, onConnected, useState } from "https://unpkg.com/wchooks?module";
 
 import "./components/attribute.js";
 import "./components/event.js";
@@ -9,6 +9,7 @@ import "./components/ref.js";
 import "./components/state.js";
 import "./components/style.js";
 import "./components/async.js";
+import "./components/method.js";
 
 function ExampleApp() {
   const [myAttr, setMyAttr] = useState(12);
@@ -35,6 +36,8 @@ function ExampleApp() {
       <example-style></example-style>
       <br />
       <example-async></example-async>
+      <br />
+      <example-method-container></example-method-container>
       <br />
       <example-life-cycle value="0"></example-life-cycle>
     </fieldset>
