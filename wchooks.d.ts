@@ -1,13 +1,13 @@
 export function Component<T>(
   renderer: () => T,
-  options?: ComponentOptions
+  options?: ComponentOptions<T>
 ): CustomElementConstructor;
 
 export interface Renderer<T> {
   (): T;
 }
 
-export interface ComponentOptions {
+export interface ComponentOptions<T> {
   render?: (templateResult: T, root: HTMLElement) => void;
   attachRoot?: (element: HTMLElement) => Element;
   Element?: typeof HTMLElement;
@@ -70,13 +70,13 @@ export function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T
 export function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
 
 export interface DispatchEvent<T> {
-  (options?: CustomEventInit<T>): CustomEvent;
+  (options?: CustomEventInit<T>): CustomEvent<T>;
 }
 
 export function useEvent<K extends keyof HTMLElementEventMap>(
   name: K,
   options?: EventInit
-): DispatchEvent<undefined>;
+): DispatchEvent<never>;
 
 export function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent<T>;
 
