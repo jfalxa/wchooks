@@ -1,6 +1,5 @@
 export function Component<T>(
   renderer: () => T,
-  render: (templateResult: T, root: HTMLElement) => void,
   options?: ComponentOptions
 ): CustomElementConstructor;
 
@@ -9,6 +8,7 @@ export interface Renderer<T> {
 }
 
 export interface ComponentOptions {
+  render?: (templateResult: T, root: HTMLElement) => void;
   attachRoot?: (element: HTMLElement) => Element;
   Element?: typeof HTMLElement;
   observedAttributes?: string[];
@@ -94,11 +94,25 @@ export function useEventListener(
   options?: boolean | AddEventListenerOptions
 ): void;
 
+export function useEventDelegation(
+  selector: string,
+  name: string,
+  listener: EventListenerOrEventListenerObject,
+  deps?: Deps,
+  options?: boolean | AddEventListenerOptions
+): void;
+
+export function useStyle(css: string): void;
+
+export function useTemplate(html: string): HTMLTemplateElement;
+
+export function useQuerySelector<E extends Element>(selector: string): Ref<E | null>;
+
+export function useQuerySelectorAll<E extends Element>(selector: string): Ref<NodeListOf<E>>;
+
 export interface LifeCycleCallback {
   (element: HTMLElement): void;
 }
-
-export function useStyle(css: string): void;
 
 export function onCreated(createdCallback: LifeCycleCallback): void;
 export function onConnected(coonectedCallback: LifeCycleCallback): void;
@@ -114,7 +128,7 @@ export function onAttributeChanged(
   ) => void
 ): void;
 
-interface LifeCycleCallbackWithClear {
+export interface LifeCycleCallbackWithClear {
   (element: HTMLElement): void | (() => void);
 }
 

@@ -1,6 +1,6 @@
 const Hooks = createHookContext();
 
-export function Component(renderer, render, options = {}) {
+export function Component(renderer, options = {}) {
   return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
@@ -52,28 +52,26 @@ export function Component(renderer, render, options = {}) {
       return this.getHook(index);
     };
 
-    runLifeCycleCallbacks(step, ...args) {
+    forEachHook = (type, callback) => {
       for (const hook of this._hooks) {
-        if (hook.type === "lifecycle" && hook.data.step === step) {
-          hook.data.callback?.(...args);
-        }
+        if (hook.type === type) callback(hook.data);
       }
-    }
+    };
 
-    clearLifeCycleCallbacks(step) {
-      for (const hook of this._hooks) {
-        if (hook.type === "lifecycle" && hook.data.step === step) {
-          hook.data.clearSideEffect?.();
-        }
-      }
-    }
+    runLifeCycleCallbacks = (step, ...args) => {
+      this.forEachHook("lifecycle", (data) => {
+        if (data.step === step) data.callback?.(...args);
+      });
+    };
+
+    clearLifeCycleCallbacks = (step) => {
+      this.forEachHook("lifecycle", (data) => {
+        if (data.step === step) data.clearSideEffect?.();
+      });
+    };
 
     appendStyles = () => {
-      for (const hook of this._hooks) {
-        if (hook.type === "style") {
-          this._root.append(hook.data);
-        }
-      }
+      this.forEachHook("style", (style) => this._root.append(style));
     };
 
     requestUpdate = async () => {
@@ -97,7 +95,8 @@ export function Component(renderer, render, options = {}) {
 
     render = () => {
       const templateResult = this.callRenderer();
-      return render(templateResult, this._root);
+      const _render = options.render ?? render;
+      return _render(templateResult, this._root);
     };
   };
 }
@@ -156,14 +155,15 @@ export function useState(initialState) {
 export function useReducer(initialState, reducer) {
   const [index, element] = Hooks.getContext();
 
-  function dispatch(action) {
-    const [oldState, _dispatch] = element.getHook(index);
-    const state = reducer(oldState, action);
-    element.setHook(index, [state, _dispatch]);
-    element.requestUpdate();
-  }
-
-  return element.registerHook(index, "reducer", () => [initialState, dispatch]);
+  return element.registerHook(index, "reducer", () => [
+    initialState,
+    (action) => {
+      const [oldState, _dispatch] = element.getHook(index);
+      const state = reducer(oldState, action);
+      element.setHook(index, [state, _dispatch]);
+      element.requestUpdate();
+    },
+  ]);
 }
 
 export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
@@ -209,34 +209,83 @@ export function useMethod(method, fn, deps) {
   onCreated((element) => (element[method] = methodFn));
 
   // then update the method every time the deps change
-  onRendered((element) => (element[method] = methodFn), [methodFn]);
+  onRendered((element) => {
+    element[method] = methodFn;
+  }, deps);
 
   return methodFn;
 }
 
-export function useEvent(name, options) {
-  const [index, element] = Hooks.getContext();
+export function useQuerySelector(selector, deps) {
+  const ref = useRef();
 
-  return element.registerHook(index, "event", () => {
-    return function dispatchEvent(eventOptions) {
-      const event = new CustomEvent(name, { ...options, ...eventOptions });
-      element.dispatchEvent(event);
-      return event;
-    };
-  });
+  // udpate the ref with a new query result every time the deps change
+  onRendered((element) => {
+    ref.value = element._root.querySelector(selector);
+  }, deps);
+
+  return ref;
 }
 
-export function useEventListener(name, callback, deps, options) {
+export function useQuerySelectorAll(selector, deps) {
+  const ref = useRef();
+
+  // udpate the ref with a new query result every time the deps change
   onRendered((element) => {
-    element.addEventListener(name, callback, options);
-    return () => element.removeEventListener(name, callback);
+    ref.value = element._root.querySelectorAll(selector);
   }, deps);
+
+  return ref.value;
+}
+
+export function useTemplate(html) {
+  // create the template only once with the given HTML
+  return useMemoize(() => {
+    const template = document.createElement("template");
+    template.innerHTML = html;
+    return template;
+  });
 }
 
 export function useStyle(css) {
   const [index, element] = Hooks.getContext();
   const style = element.registerHook(index, "style", () => document.createElement("style"));
-  onRendered(() => { style.textContent = css }, [css]); // prettier-ignore
+
+  // update the style tag content when the CSS changes
+  onRendered(() => {
+    style.textContent = css;
+  }, [css]);
+}
+
+export function useEvent(event, options) {
+  const [index, element] = Hooks.getContext();
+
+  return element.registerHook(index, "event", () => {
+    // create a function that dispatches the event configured by this hook
+    return function dispatchEvent(eventOptions) {
+      const _event = new CustomEvent(event, { ...options, ...eventOptions });
+      element.dispatchEvent(_event);
+      return _event;
+    };
+  });
+}
+
+export function useEventListener(event, callback, deps, options) {
+  // add and remove event listener when the deps change
+  onRendered((element) => {
+    element.addEventListener(event, callback, options);
+    return () => element.removeEventListener(event, callback, options);
+  }, deps);
+}
+
+export function useEventDelegation(selector, event, callback, deps, options) {
+  onRendered((element) => {
+    // run the callback only if the target matches the selector
+    const _callback = (e) => e.target.closest?.(selector) && callback(e);
+
+    element._root.addEventListener(event, _callback, options);
+    return () => element._root.removeEventListener(event, _callback, options);
+  }, deps);
 }
 
 function useLifeCycle(step, callback) {
@@ -297,6 +346,14 @@ function createHookContext() {
       element = el;
     },
   };
+}
+
+function render(template, root) {
+  // only rerender if the template has changed
+  if (root._template !== template) {
+    root._template = template;
+    root.append(template.content.cloneNode(true));
+  }
 }
 
 function observeProperty(element, property, defaultValue) {
