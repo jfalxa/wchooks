@@ -1,15 +1,15 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState } from "./wchooks.mjs";
+import { Component, onConnected, useState } from "../wchooks.mjs";
 
-import "./components/attribute.js";
-import "./components/event.js";
-import "./components/lifecycle.js";
-import "./components/property.js";
-import "./components/ref.js";
-import "./components/state.js";
-import "./components/style.js";
-import "./components/async.js";
-import "./components/method.js";
+import "./attribute.js";
+import "./event.js";
+import "./lifecycle.js";
+import "./property.js";
+import "./ref.js";
+import "./state.js";
+import "./style.js";
+import "./async.js";
+import "./method.js";
 
 function ExampleApp() {
   const [myAttr, setMyAttr] = useState(12);

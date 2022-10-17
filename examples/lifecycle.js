@@ -40,7 +40,9 @@ function ExampleLifeCycle() {
 
   return html`
     <fieldset>
-      <legend><b>Lifecycle callbacks</b></legend>
+      <legend>
+        <b>onCreated / onConnected / onDisconnected / onAttributeChanged / onRendered</b>
+      </legend>
       <button @click=${(e) => removeHostFromDocument(e.target)}>
         Remove this block from document
       </button>

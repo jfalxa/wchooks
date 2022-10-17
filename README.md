@@ -23,7 +23,7 @@ This library being published on npm, you can:
 
 ## Basic example
 
-→ Check out the [example page](/docs/) for a more complete demo.
+A counter with a button to increment its value:
 
 ```js
 import { html, render } from "lit-html";
@@ -114,7 +114,7 @@ interface ComponentOptions {
 
 ### useRef
 
-[→ See the example](/docs/components/ref.js)
+[→ See the example](/examples/ref.js)
 
 Create a reference to an object that will remain at the same address for the whole life of the component. The value is then accessible through `ref.value`.
 
@@ -128,7 +128,7 @@ function useRef<T>(initialValue?: T): Ref<T>;
 
 ### useState
 
-[→ See the example](/docs/components/state.js)
+[→ See the example](/examples/state.js)
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
@@ -161,7 +161,7 @@ function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch
 
 ### useMemoize
 
-[→ See the example](/docs/components/state.js)
+[→ See the example](/examples/state.js)
 
 Only recreate the value when the deps change.
 
@@ -185,7 +185,7 @@ function useMemoize<T>(createValue: () => T, deps: Deps): T;
 
 ### useMemoizeFn
 
-[→ See the example](/docs/components/property.js)
+[→ See the example](/examples/property.js)
 
 Only update the function scope when the deps change.
 
@@ -199,7 +199,7 @@ function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
 
 ### useAsync
 
-[→ See the example](/docs/components/async.js)
+[→ See the example](/examples/async.js)
 
 Creates a wrapper around an async function that allows tracking the evolution of the async operation while preventing racing conditions between consecutive calls.
 
@@ -224,7 +224,7 @@ function useAsync<F extends AsyncFn>(asyncFn: F, deps?: Deps): Async<F>;
 
 ### useAttribute
 
-[→ See the example](/docs/components/attribute.js)
+[→ See the example](/examples/attribute.js)
 
 Bind the component rendering to the given attribute and return the current value of the attribute along with a function to update it.
 
@@ -245,7 +245,7 @@ function useAttribute<T>(attribute: string, options?: AttributeOptions<T>): [T, 
 
 ### useProperty
 
-[→ See the example](/docs/components/property.js)
+[→ See the example](/examples/property.js)
 
 Bind the component to the given property so it rerenders when it changes.
 Returns the current value of the property along with a setter.
@@ -256,7 +256,7 @@ function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 
 ### useMethod
 
-[→ See the example](/docs/components/method.js)
+[→ See the example](/examples/method.js)
 
 Add a new method to the custom element object.
 It is useful if you want the dom element to expose an imperative API that has access to the private parts of the component like state and refs.
@@ -270,7 +270,7 @@ function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
 
 ### useEvent
 
-[→ See the example](/docs/components/event.js)
+[→ See the example](/examples/event.js)
 
 Create an event dispatcher function that when called will dispatch the specified event with the given options.
 
@@ -291,7 +291,7 @@ function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent<
 
 ### useEventListener
 
-[→ See the example](/docs/components/event.js)
+[→ See the example](/examples/event.js)
 
 Add an event listener bound to the current component that will attach and detach itself automatically, following the component lifecycle and deps change.
 
@@ -313,7 +313,7 @@ function useEventListener(
 
 ### useStyle
 
-[→ See the example](/docs/components/style.js)
+[→ See the example](/examples/style.js)
 
 Creates a style tag containing the given CSS and adds it to the component render root.
 
@@ -325,7 +325,7 @@ function useStyle(css: string): void;
 
 ## Life cycle hooks
 
-For a full example of life cycle hooks, please consult the [lifecycle example script](/docs/components/lifecycle.js).
+For a full example of life cycle hooks, please consult the [lifecycle example script](/examples/lifecycle.js).
 
 ### onRendered
 

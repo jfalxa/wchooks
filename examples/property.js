@@ -30,7 +30,7 @@ function ExampleProperty() {
       <button @click=${addMyPropItem}>Add</button>
       <button @click=${removeMyPropItem}>Remove</button>
       <span>= [${repeat(myProp, (value) => html`<b>${value}</b>, `)}*]</span>
-      <span>→ check window.appElement.myProp in console</span>
+      <span>→ check window.exampleApp.myProp in console</span>
     </fieldset>
   `;
 }

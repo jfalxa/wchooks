@@ -2,11 +2,9 @@ import { resolve } from "path";
 import { defineConfig } from "vite";
 
 export default defineConfig({
-  root: "docs",
-
   build: {
     minify: true,
-    outDir: "..",
+    outDir: ".",
 
     lib: {
       entry: resolve(__dirname, "wchooks.mjs"),
