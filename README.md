@@ -44,16 +44,16 @@ const Counter = () => {
   `;
 };
 
-customElements.define("my-counter", Component(Counter, render));
+customElements.define("my-counter", Component(Counter, { render }));
 ```
 
 ## Component factory
 
 The `Component` factory is the function used to build a custom `HTMLElement` that can work with hooks.
 
-Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed as second argument.
+Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed in the options.
 
-This `render` function is for example the one you get from `import { render } from "lit-html"`. It works in tandem with the `html` function also exported by `lit-html`.
+If no `render` option is specified, `wchooks` will expect your renderers to return directly an `HTMLTemplateElement` and it will automatically put their content in the DOM, replacing the previous content if the template has changed.
 
 The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
 
@@ -69,12 +69,14 @@ function Component<T>(
 
 You also have a few other options to customize the behavior of your component:
 
+- `render`: This function applies the templates returned by your renderers to the DOM, this is e.g. `import { render } from "lit-html"`
 - `observedAttributes`: List of attributes that should trigger a rerender in your component when they change
 - `attachRoot`: Pick a rendering root different than the default open `shadowRoot`
 - `Element`: Specify another class than HTMLElement that your component should extend
 
 ```typescript
 interface ComponentOptions {
+  render?: (templateResult: T, root: HTMLElement) => void;
   attachRoot?: (element: HTMLElement) => Element;
   Element?: typeof HTMLElement;
   observedAttributes?: string[];
@@ -99,16 +101,20 @@ interface ComponentOptions {
 9. [useMethod](#usemethod)
 10. [useEvent](#useevent)
 11. [useEventListener](#useeventlistener)
-12. [useStyle](#usestyle)
+12. [useEventDelegation](#useeventlistener)
+13. [useStyle](#usestyle)
+14. [useTemplate](#usetemplate)
+15. [useQuerySelector](#usequeryselector)
+16. [useQuerySelectorAll](#usequeryselectorall)
 
 ### Lifecycle hooks
 
-13. [onRendered](#onrendered)
-14. [onCreated](#oncreated)
-15. [onConnected](#onconnected)
-16. [onDisconnected](#ondisconnected)
-17. [onAttributeChanged](#onattributechanged)
-18. [onAdopted](#onadopted)
+17. [onRendered](#onrendered)
+18. [onCreated](#oncreated)
+19. [onConnected](#onconnected)
+20. [onDisconnected](#ondisconnected)
+21. [onAttributeChanged](#onattributechanged)
+22. [onAdopted](#onadopted)
 
 ## Data hooks
 
@@ -297,14 +303,39 @@ Add an event listener bound to the current component that will attach and detach
 
 ```typescript
 function useEventListener<E extends keyof HTMLElementEventMap>(
-  name: E,
+  event: E,
   listener: (this: HTMLElement, event: HTMLElementEventMap[E]) => any,
   deps?: Deps,
   options?: boolean | AddEventListenerOptions
 ): void;
 
 function useEventListener(
-  name: string,
+  event: string,
+  listener: EventListenerOrEventListenerObject,
+  deps?: Deps,
+  options?: boolean | AddEventListenerOptions
+): void;
+```
+
+### useEventDelegation
+
+[→ See the example](/examples/template.js)
+
+Similar to [useEventListener](#useeventlistener) except the callback will only run when the actual event target matches the given selector.
+This allows you to define event listeners on elements that are nested inside the render root of your component.
+
+```typescript
+function useEventDelegation<E extends keyof HTMLElementEventMap>(
+  selector: string,
+  event: E,
+  listener: (this: HTMLElement, event: HTMLElementEventMap[E]) => any,
+  deps?: Deps,
+  options?: boolean | AddEventListenerOptions
+): void;
+
+function useEventDelegation(
+  selector: string,
+  event: string,
   listener: EventListenerOrEventListenerObject,
   deps?: Deps,
   options?: boolean | AddEventListenerOptions
@@ -321,6 +352,42 @@ Every time the given CSS string changes, this style tag content will also be upd
 
 ```typescript
 function useStyle(css: string): void;
+```
+
+### useTemplate
+
+[→ See the example](/examples/template.js)
+
+Creates a static template holding the given HTML.
+
+If you are not using a custom `render` function in your `Component` factory, in your renderer you can directly return the `HTMLTemplateElement` created by this hook and `wchooks` will automatically add the template content at the root of your component.
+
+The template is only created once and cannot be updated, so there is no point in updating the HTML string passed as argument.
+
+If you want to interact with the generated DOM, you will have to go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useventdelegation), which can get quite verbose.
+
+This hook only covers a very basic use case, so for rendering HTML it is recommended to use libs like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/), it will give you a way smoother development experience.
+
+```typescript
+function useTemplate(html: string): HTMLTemplateElement;
+```
+
+### useQuerySelector
+
+Queries the component render root for the given selector and returns the first result in a ref.
+If no deps are passed, the query will be done on every render.
+
+```typescript
+function useQuerySelector<E extends Element>(selector: string, deps?: Deps): Ref<E | null>;
+```
+
+### useQuerySelectorAll
+
+Queries the component render root for the given selector and returns the list of results in a ref.
+If no deps are passed, the query will be done on every render.
+
+```typescript
+function useQuerySelectorAll<E extends Element>(selector: string, deps?: Deps): Ref<NodeListOf<E>>;
 ```
 
 ## Life cycle hooks
