@@ -235,7 +235,7 @@ export function useQuerySelectorAll(selector, deps) {
     ref.value = element._root.querySelectorAll(selector);
   }, deps);
 
-  return ref.value;
+  return ref;
 }
 
 export function useTemplate(html) {
