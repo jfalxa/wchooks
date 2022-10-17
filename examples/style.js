@@ -25,6 +25,7 @@ function ExampleStyle() {
       />
 
       <span class="text" style="margin-left: 8px">Text with dynamic size</span>
+      <span>→ check the style tag in this element</span>
     </fieldset>
   `;
 }

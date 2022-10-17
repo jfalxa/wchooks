@@ -1,11 +1,11 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat";
-import { Component, useMemoizeFn, useProperty } from "../wchooks.mjs";
+import { Component, onCreated, useMemoizeFn, useProperty } from "../wchooks.mjs";
 
 function ExampleProperty() {
   // setup the "myProp" property of the custom element,
   // you'll then be able to access it directly with element.myProp
-  const [myProp, setMyProp] = useProperty("myProp");
+  const [myProp, setMyProp] = useProperty("myProp", [1, 2, 3, 4]);
 
   // define advanced deps checking for memoizing the myProp modifier methods
   const myPropDeps = {
@@ -24,13 +24,17 @@ function ExampleProperty() {
     setMyProp(myProp.slice(0, -1));
   }, myPropDeps);
 
+  onCreated((element) => {
+    window.exampleProperty = element;
+  });
+
   return html`
     <fieldset>
       <legend><b>useProperty / useMemoizeFn</b></legend>
       <button @click=${addMyPropItem}>Add</button>
       <button @click=${removeMyPropItem}>Remove</button>
       <span>= [${repeat(myProp, (value) => html`<b>${value}</b>, `)}*]</span>
-      <span>→ check window.exampleApp.myProp in console</span>
+      <span>→ play with <code>window.exampleProperty.myProp</code> in the console</span>
     </fieldset>
   `;
 }

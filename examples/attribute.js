@@ -15,8 +15,11 @@ function ExampleAttribute() {
   return html`
     <fieldset>
       <legend><b>useAttribute</b></legend>
-      <input type="number" value=${myAttr} @input=${(e) => setMyAttr(e.target.value)} />
-      <span>→ check dom to see the new "my-attr" attribute value</span>
+      <input type="number" .value=${myAttr} @input=${(e) => setMyAttr(e.target.value)} />
+      <span
+        >→ play with the <code>"my-attr"</code> attribute of
+        <code>${"<example-attribute>"}</code> in the DOM</span
+      >
     </fieldset>
   `;
 }

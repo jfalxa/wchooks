@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, onConnected, useState } from "../wchooks.mjs";
+import { Component } from "../wchooks.mjs";
 
 import "./attribute.js";
 import "./event.js";
@@ -12,14 +12,6 @@ import "./async.js";
 import "./method.js";
 
 function ExampleApp() {
-  const [myAttr, setMyAttr] = useState(12);
-  const [myProp, setMyProp] = useState([1]);
-
-  onConnected(() => {
-    setTimeout(() => setMyAttr(102), 1000);
-    setTimeout(() => setMyProp([1, 2, 3, 4]), 2000);
-  });
-
   return html`
     <h1>Examples of wchooks components</h1>
 
@@ -28,8 +20,8 @@ function ExampleApp() {
     <section style="display: flex; flex-direction: column; gap: 24px;">
       <example-counter></example-counter>
       <example-event></example-event>
-      <example-attribute my-attr=${myAttr}></example-attribute>
-      <example-property .myProp=${myProp}></example-property>
+      <example-attribute></example-attribute>
+      <example-property></example-property>
       <example-dom-ref></example-dom-ref>
       <example-style></example-style>
       <example-async></example-async>

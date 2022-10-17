@@ -2,14 +2,16 @@ import { html, render } from "https://unpkg.com/lit-html";
 import { Component, useAsync } from "../wchooks.mjs";
 
 function ExampleAsync() {
-  const todos = useAsync(async ({ delay }) => {
+  const todos = useAsync(async ({ delay, shouldThrow }) => {
     const response = await fetch("https://jsonplaceholder.typicode.com/todos");
     const todos = await response.json();
 
     // wait the specified delay before resolving
     await new Promise((resolve) => setTimeout(resolve, delay));
 
-    // throw new Error("Something happened."); // toggle comment to check error mode
+    if (shouldThrow) {
+      throw new Error("Error: could not fetch todos");
+    }
 
     return todos;
   });
@@ -22,7 +24,10 @@ function ExampleAsync() {
   return html`
     <fieldset>
       <legend><b>useAsync</b></legend>
-      <button @click=${() => todos.call({ delay: 1000 })}>Fetch some data</button>
+      <button @click=${() => todos.call({ delay: 1000 })}>Fetch data</button>
+      <button @click=${() => todos.call({ delay: 1000, shouldThrow: true })}>
+        Fetch data with error
+      </button>
       <span>→ ${todos.loading ? "LOADING..." : summary}</span>
     </fieldset>
   `;
