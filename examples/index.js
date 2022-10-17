@@ -10,6 +10,7 @@ import "./state.js";
 import "./style.js";
 import "./async.js";
 import "./method.js";
+import "./template.js";
 
 function ExampleApp() {
   return html`
@@ -26,9 +27,10 @@ function ExampleApp() {
       <example-style></example-style>
       <example-async></example-async>
       <example-method-container></example-method-container>
+      <example-template></example-template>
       <example-life-cycle value="0"></example-life-cycle>
     </section>
   `;
 }
 
-customElements.define("example-app", Component(ExampleApp, render));
+customElements.define("example-app", Component(ExampleApp, { render }));

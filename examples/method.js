@@ -19,7 +19,7 @@ function ExampleMethodContainer() {
   `;
 }
 
-customElements.define("example-method-container", Component(ExampleMethodContainer, render));
+customElements.define("example-method-container", Component(ExampleMethodContainer, { render }));
 
 function ExampleMethod() {
   const [active, setActive] = useState(false);
@@ -42,4 +42,4 @@ function ExampleMethod() {
   `;
 }
 
-customElements.define("example-method", Component(ExampleMethod, render));
+customElements.define("example-method", Component(ExampleMethod, { render }));

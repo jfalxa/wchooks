@@ -39,4 +39,4 @@ function ExampleProperty() {
   `;
 }
 
-customElements.define("example-property", Component(ExampleProperty, render));
+customElements.define("example-property", Component(ExampleProperty, { render }));

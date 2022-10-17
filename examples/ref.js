@@ -19,4 +19,4 @@ function ExampleDOMRef() {
   `;
 }
 
-customElements.define("example-dom-ref", Component(ExampleDOMRef, render));
+customElements.define("example-dom-ref", Component(ExampleDOMRef, { render }));

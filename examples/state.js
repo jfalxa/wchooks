@@ -37,4 +37,4 @@ function ExampleState() {
   `;
 }
 
-customElements.define("example-counter", Component(ExampleState, render));
+customElements.define("example-counter", Component(ExampleState, { render }));

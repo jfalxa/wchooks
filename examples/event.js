@@ -21,4 +21,4 @@ function ExampleEvent() {
   `;
 }
 
-customElements.define("example-event", Component(ExampleEvent, render));
+customElements.define("example-event", Component(ExampleEvent, { render }));

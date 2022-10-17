@@ -30,4 +30,4 @@ function ExampleStyle() {
   `;
 }
 
-customElements.define("example-style", Component(ExampleStyle, render));
+customElements.define("example-style", Component(ExampleStyle, { render }));

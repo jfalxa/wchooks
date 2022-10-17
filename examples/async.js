@@ -33,4 +33,4 @@ function ExampleAsync() {
   `;
 }
 
-customElements.define("example-async", Component(ExampleAsync, render));
+customElements.define("example-async", Component(ExampleAsync, { render }));
