@@ -364,7 +364,7 @@ If you are not using a custom `render` function in your `Component` factory, in 
 
 The template is only created once and cannot be updated, so there is no point in updating the HTML string passed as argument.
 
-If you want to interact with the generated DOM, you will have to go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useventdelegation), which can get quite verbose.
+If you want to interact with the generated DOM, you will have to go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useeventdelegation), which can get quite verbose.
 
 This hook only covers a very basic use case, so for rendering HTML it is recommended to use libs like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/), it will give you a way smoother development experience.
 
@@ -373,6 +373,8 @@ function useTemplate(html: string): HTMLTemplateElement;
 ```
 
 ### useQuerySelector
+
+[→ See the example](/examples/template.js)
 
 Queries the component render root for the given selector and returns the first result in a ref.
 If no deps are passed, the query will be done on every render.
