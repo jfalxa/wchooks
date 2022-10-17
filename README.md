@@ -362,11 +362,11 @@ Creates a static template holding the given HTML.
 
 If you are not using a custom `render` function in your `Component` factory, in your renderer you can directly return the `HTMLTemplateElement` created by this hook and `wchooks` will automatically add the template content at the root of your component.
 
-The template is only created once and cannot be updated, so there is no point in updating the HTML string passed as argument.
+This template is only created once and cannot be updated, so there is no point in updating the HTML string passed as argument.
 
-If you want to interact with the generated DOM, you will have to go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useeventdelegation), which can get quite verbose.
+If you want to interact with the generated DOM, you must go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useeventdelegation). Then when a state update occurs, you will have to imperatively update these DOM elements in the `onRendered` lifecycle hook, which can get quite verbose and hard to follow.
 
-This hook only covers a very basic use case, so for rendering HTML it is recommended to use libs like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/), it will give you a way smoother development experience.
+For this reason it is recommended to use declarative libs like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/), they will offer you a way smoother development experience.
 
 ```typescript
 function useTemplate(html: string): HTMLTemplateElement;

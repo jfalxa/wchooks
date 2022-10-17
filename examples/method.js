@@ -25,7 +25,7 @@ function ExampleMethod() {
   const [active, setActive] = useState(false);
 
   // the method is bound to the element under the specified name
-  // and it is also returned so we can also access it in the rendering context
+  // and it is also returned so we can access it in the rendering scope
   const toggleCheckbox = useMethod("toggleCheckbox", () => setActive((active) => !active)); // can also have deps in case the used scope changes
 
   onCreated((element) => {
