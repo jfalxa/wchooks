@@ -1,6 +1,5 @@
 import {
   Component,
-  onConnected,
   onRendered,
   useEventDelegation,
   useQuerySelector,
@@ -39,7 +38,7 @@ function ExampleTemplate() {
   const listItems = useQuerySelectorAll(".listItem");
 
   // listen to changes in the radio buttons to update the state
-  useEventDelegation("input.radio", "change", (e) => {
+  useEventDelegation(".listItem input.radio", "change", (e) => {
     setSelection(e.target.value);
   });
 

@@ -9,13 +9,9 @@ function ExampleState() {
   const counterTimes5 = useMemoize(() => counter * 5, [counter]);
 
   // add a callback to be run just after the counter state has been rendered in the dom
-  onRendered(
-    (element) => {
-      const dom = element.shadowRoot?.getElementById("counter")?.innerText;
-      console.log(`[STATE] after render: counter = ${counter}`);
-    },
-    [counter]
-  );
+  onRendered(() => {
+    console.log(`[STATE] after render: counter = ${counter}`);
+  }, [counter]);
 
   function increment() {
     setCounter((counter) => counter + 1);
