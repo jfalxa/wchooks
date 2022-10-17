@@ -16,7 +16,7 @@ function ExampleTemplate() {
     <fieldset>
       <legend><b>useTemplate / useQuerySelector / useEventDelegation</b></legend>
       <input id="input" />
-      <span>→ play with <code>window.inputRef</code> in the console</span>
+      <span>→ check the input in the DOM
     </fieldset>
   `);
 
