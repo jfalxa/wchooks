@@ -46,7 +46,7 @@ function ExampleMethod() {
   return html`
     <fieldset style="margin-top: 8px">
       <legend>child component with exposed method</legend>
-      <button @click=${toggleCheckbox}>Toggle checkbox</button>
+      <button @click=${() => toggleCheckbox()}>Toggle checkbox</button>
       <input
         type="checkbox"
         .checked=${active}

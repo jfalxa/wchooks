@@ -211,16 +211,19 @@ export function useMethod(name, method, deps) {
 
   // as soon as the component is created, add the method to the element
   // if no method function is provided, we get the method with the same name already defined in the element
-  onConnected((element) => {
+  const previousDeps = element.registerHook(index, "method", () => {
     element[name] = method ?? element[name];
+    return null;
   });
 
-  // then update the method every time the deps change
-  onRendered((element) => {
+  // then update the method only if the deps change
+  if (hasChangedDeps(deps, previousDeps)) {
     element[name] = method ?? element[name];
-  }, deps);
+    element.setHook(index, deps);
+  }
 
-  return element.registerHook(index, "method", () => element[name] ?? method);
+  // directly return the method registered on the element
+  return element[name];
 }
 
 export function useQuerySelector(selector, deps) {
