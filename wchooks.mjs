@@ -11,13 +11,13 @@ export function Component(renderer, options = {}) {
     constructor() {
       super();
       this._root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
-      this.callRenderer(); // dry run the renderer so we register the first hooks
-      this.appendStyles(); // create the required style tag as soon as the component is created
-      this.runLifeCycleCallbacks("created", this);
+      this.resetRendered(); // setup a promise that resolves only once all pending updates have been applied
     }
 
     connectedCallback() {
-      this.requestUpdate();
+      this.requestUpdate(); // schedule an update for after this whole callback is done running
+      this.callRenderer(); // dry run the renderer so we can register the component's hooks
+      this.appendStyles(); // create the required style tag as soon as the component is created
       this.runLifeCycleCallbacks("connected", this);
     }
 
@@ -26,9 +26,8 @@ export function Component(renderer, options = {}) {
       this.runLifeCycleCallbacks("adopted", this);
     }
 
-    attributeChangedCallback(name, oldValue, newValue) {
+    attributeChangedCallback() {
       this.requestUpdate();
-      this.runLifeCycleCallbacks("attributeChanged", this, name, oldValue, newValue);
     }
 
     disconnectedCallback() {
@@ -76,10 +75,12 @@ export function Component(renderer, options = {}) {
 
     requestUpdate = async () => {
       if (!this._updateRequested) {
+        this.resetRendered(); // prepare the promise that will resolve once all updates are done
         this._updateRequested = true;
         await Promise.resolve(); // defer the execution of the function starting from here
         this._updateRequested = false;
         this.update(); // that way update() will be called only after all other sync operations are done
+        this.resolveRendered();
       }
     };
 
@@ -98,6 +99,10 @@ export function Component(renderer, options = {}) {
       const _render = options.render ?? render;
       return _render(templateResult, this._root);
     };
+
+    resetRendered() {
+      this.rendered = new Promise((resolve) => (this.resolveRendered = resolve));
+    }
   };
 }
 
@@ -166,54 +171,56 @@ export function useReducer(initialState, reducer) {
   ]);
 }
 
-export function useAttribute(attribute, { get = (v) => v, set = String } = {}) {
+export function useAttribute(name, { get = (v) => v, set = String } = {}) {
   const [index, element] = Hooks.getContext();
 
-  const value = get(element.getAttribute(attribute));
+  const attribute = get(element.getAttribute(name));
 
   const setAttribute = element.registerHook(index, "attribute", () => {
-    return function setAttribute(value) {
-      const oldValue = get(element.getAttribute(attribute));
-      const nextValue = resolveData(value, oldValue);
-      element.setAttribute(attribute, set(nextValue));
+    return function setAttribute(attribute) {
+      const oldValue = get(element.getAttribute(name));
+      const nextValue = resolveData(attribute, oldValue);
+      element.setAttribute(name, set(nextValue));
     };
   });
 
-  return [value, setAttribute];
+  return [attribute, setAttribute];
 }
 
-export function useProperty(property, initialValue) {
+export function useProperty(name, initialValue) {
   const [index, element] = Hooks.getContext();
 
-  // as soon as the component is created, setup a proxy to the prop to allow tracking its updates
-  onCreated(() => observeProperty(element, property, initialValue));
+  // as soon as the component is created, setup a proxy to the property to allow tracking its updates
+  onConnected((element) => observeProperty(element, name, initialValue));
 
-  const value = element[property] ?? initialValue;
+  const property = element[name] ?? initialValue;
 
   const setProperty = element.registerHook(index, "property", () => {
     return function setProperty(value) {
-      const oldValue = element[property];
+      const oldValue = element[name];
       const nextValue = resolveData(value, oldValue);
-      element[property] = nextValue;
+      element[name] = nextValue;
     };
   });
 
-  return [value, setProperty];
+  return [property, setProperty];
 }
 
-export function useMethod(method, fn, deps) {
-  // memoize the function according to deps
-  const methodFn = useMemoizeFn(fn, deps);
+export function useMethod(name, method, deps) {
+  const [index, element] = Hooks.getContext();
 
   // as soon as the component is created, add the method to the element
-  onCreated((element) => (element[method] = methodFn));
+  // if no method function is provided, we get the method with the same name already defined in the element
+  onConnected((element) => {
+    element[name] = method ?? element[name];
+  });
 
   // then update the method every time the deps change
   onRendered((element) => {
-    element[method] = methodFn;
+    element[name] = method ?? element[name];
   }, deps);
 
-  return methodFn;
+  return element.registerHook(index, "method", () => element[name] ?? method);
 }
 
 export function useQuerySelector(selector, deps) {
@@ -294,24 +301,16 @@ function useLifeCycle(step, callback) {
   element.setHook(index, { step, callback }); // update the callback function on every render
 }
 
-export function onCreated(createdCallback) {
-  useLifeCycle("created", createdCallback);
-}
-
-export function onAttributeChanged(attributeChangedCallback) {
-  useLifeCycle("attributeChanged", attributeChangedCallback);
-}
-
-export function onAdopted(adoptedCallback) {
-  useLifeCycle("adopted", adoptedCallback);
-}
-
 export function onConnected(connectedCallback) {
   useLifeCycle("connected", connectedCallback);
 }
 
 export function onDisconnected(disconnectedCallback) {
   useLifeCycle("disconnected", disconnectedCallback);
+}
+
+export function onAdopted(adoptedCallback) {
+  useLifeCycle("adopted", adoptedCallback);
 }
 
 export function onRendered(sideEffect, deps) {
@@ -337,6 +336,7 @@ function createHookContext() {
   let element = undefined;
 
   return {
+    context: element,
     getContext: () => [
       index++, //
       element,

@@ -2,7 +2,7 @@ import { html, render } from "https://unpkg.com/lit-html";
 import { Component, useState, useStyle } from "../wchooks.mjs";
 
 function ExampleStyle() {
-  const [size, setSize] = useState(16);
+  const [size, setSize] = useState("16");
 
   useStyle(`
     .text {
@@ -20,7 +20,7 @@ function ExampleStyle() {
         placeholder="Text size"
         type="number"
         size="2"
-        .value=${size}
+        .value=${String(size)}
         @input=${(e) => setSize(e.target.value)}
       />
 

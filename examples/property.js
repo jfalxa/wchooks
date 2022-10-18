@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { repeat } from "https://unpkg.com/lit-html/directives/repeat";
-import { Component, onCreated, useMemoizeFn, useProperty } from "../wchooks.mjs";
+import { repeat } from "https://unpkg.com/lit-html/directives/repeat.js";
+import { Component, onConnected, useMemoizeFn, useProperty } from "../wchooks.mjs";
 
 function ExampleProperty() {
   // setup the "myProp" property of the custom element,
@@ -15,25 +15,27 @@ function ExampleProperty() {
 
   // add (last element + 1) to the myProp list
   const addMyPropItem = useMemoizeFn(() => {
-    const last = myProp[myProp.length - 1] ?? 0;
-    setMyProp([...myProp, last + 1]);
+    setMyProp((myProp) => {
+      const last = myProp[myProp.length - 1] ?? 0;
+      return [...myProp, last + 1];
+    });
   }, myPropDeps);
 
   // remove last element from the myProp list
   const removeMyPropItem = useMemoizeFn(() => {
-    setMyProp(myProp.slice(0, -1));
+    setMyProp((myProp) => myProp.slice(0, -1));
   }, myPropDeps);
 
-  onCreated((element) => {
+  onConnected((element) => {
     window.exampleProperty = element;
   });
 
   return html`
     <fieldset>
       <legend><b>useProperty / useMemoizeFn</b></legend>
-      <button @click=${addMyPropItem}>Add</button>
-      <button @click=${removeMyPropItem}>Remove</button>
-      <span>= [${repeat(myProp, (value) => html`<b>${value}</b>, `)}*]</span>
+      <button id="add" @click=${addMyPropItem}>Add</button>
+      <button id="remove" @click=${removeMyPropItem}>Remove</button>
+      <span id="list">= [${repeat(myProp, (value) => html`<b>${value}</b>, `)}*]</span>
       <span>→ play with <code>window.exampleProperty.myProp</code> in the console</span>
     </fieldset>
   `;

@@ -63,11 +63,11 @@ export interface AttributeOptions<T> {
   set?: (value: T) => string;
 }
 
-export function useAttribute<T>(attribute: string, options?: AttributeOptions<T>): [T, Setter<T>];
+export function useAttribute<T>(name: string, options?: AttributeOptions<T>): [T, Setter<T>];
 
-export function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
+export function useProperty<T>(name: string, defaultValue?: T): [T, Setter<T>];
 
-export function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
+export function useMethod<F extends Fn>(name: string, method: F, deps?: Deps): F;
 
 export interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent<T>;
@@ -114,19 +114,9 @@ export interface LifeCycleCallback {
   (element: HTMLElement): void;
 }
 
-export function onCreated(createdCallback: LifeCycleCallback): void;
 export function onConnected(coonectedCallback: LifeCycleCallback): void;
 export function onAdopted(adoptedCallback: LifeCycleCallback): void;
 export function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
-
-export function onAttributeChanged(
-  callback: (
-    element: HTMLElement,
-    name: string,
-    oldValue: string | null,
-    newValue: string | null
-  ) => void
-): void;
 
 export interface LifeCycleCallbackWithClear {
   (element: HTMLElement): void | (() => void);

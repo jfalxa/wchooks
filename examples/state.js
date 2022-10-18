@@ -8,11 +8,6 @@ function ExampleState() {
   // update this variable with the current date only when the counter has just changed
   const counterTimes5 = useMemoize(() => counter * 5, [counter]);
 
-  // add a callback to be run just after the counter state has been rendered in the dom
-  onRendered(() => {
-    console.log(`[STATE] after render: counter = ${counter}`);
-  }, [counter]);
-
   function increment() {
     setCounter((counter) => counter + 1);
     setCounter((counter) => counter + 1);
@@ -26,11 +21,11 @@ function ExampleState() {
   return html`
     <fieldset>
       <legend><b>useState / useMemoize</b></legend>
-      <button @click=${increment}>+3</button>
-      <button @click=${decrement}>-1</button>
-      <span>= <span id="counter">${counter}</span> (x5 = ${counterTimes5})</span>
+      <button id="increment" @click=${increment}>+3</button>
+      <button id="decrement" @click=${decrement}>-1</button>
+      <span>= <b id="counter">${counter}</b> <i id="multiplier">(x5 = ${counterTimes5})</i></span>
     </fieldset>
   `;
 }
 
-customElements.define("example-counter", Component(ExampleState, { render }));
+customElements.define("example-state", Component(ExampleState, { render }));

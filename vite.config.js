@@ -8,8 +8,22 @@ export default defineConfig({
 
     lib: {
       entry: resolve(__dirname, "wchooks.mjs"),
-      fileName: () => "wchooks.js",
+      name: "wchooks",
       formats: ["es"],
+      fileName: () => "wchooks.js",
+    },
+  },
+
+  test: {
+    globals: true,
+    environment: "jsdom",
+
+    alias: {
+      "https://unpkg.com/lit-html": "lit-html",
+    },
+
+    coverage: {
+      include: ["wchooks.mjs"],
     },
   },
 });

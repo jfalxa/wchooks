@@ -1,37 +1,33 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import {
-  onAttributeChanged,
   onConnected,
-  onCreated,
   onDisconnected,
   onRendered,
   Component,
+  useMethod,
+  useState,
 } from "../wchooks.mjs";
 
 function ExampleLifeCycle() {
-  // add a callback to be run during the constructor call
-  onCreated((element) => {
-    console.log("[LIFECYCLE] Created", element);
-  });
+  const [_, update] = useState();
 
-  onAttributeChanged((element, name, oldValue, newValue) => {
-    console.log("[LIFECYCLE] AttributeChanged", { name, oldValue, newValue }, element);
-  });
-
-  // add a callback to be run just after the update has been rendered to the dom
-  onRendered((element) => {
-    console.log("[LIFECYCLE] Rendered", element);
-    return () => console.log("[LIFECYCLE] Rendered clear previous", element);
-  });
+  // grab the onLifeCycle callback passed directly as property
+  const onLifeCycle = useMethod("onLifeCycle");
 
   // add a callback to be run during connectedCallback
   onConnected((element) => {
-    console.log("[LIFECYCLE] Connected", element);
+    onLifeCycle("onConnected", element);
   });
 
   // add a callback to be run when the element is removed
   onDisconnected((element) => {
-    console.log("[LIFECYCLE] Disconnected", element);
+    onLifeCycle("onDisconnected", element);
+  });
+
+  // add a callback to be run just after the update has been rendered to the dom
+  onRendered((element) => {
+    onLifeCycle("onRendered", element);
+    return () => onLifeCycle("onRendered (cleared)", element);
   });
 
   function removeHostFromDocument(target) {
@@ -41,13 +37,14 @@ function ExampleLifeCycle() {
   return html`
     <fieldset>
       <legend>
-        <b>onCreated / onConnected / onDisconnected / onAttributeChanged / onRendered</b>
+        <b>onConnected / onDisconnected / onAttributeChanged / onRendered</b>
       </legend>
-      <button @click=${(e) => removeHostFromDocument(e.target)}>
+      <button id="update" @click=${() => update()}>Update</button>
+      <button id="remove" @click=${(e) => removeHostFromDocument(e.target)}>
         Remove this block from document
       </button>
-      <span>→ check console for lifecycle callbacks</span>
-      <example-nested-life-cycle></example-nested-life-cycle>
+      <span>→ check lifecycle callbacks in the dev-tools</span>
+      <example-nested-life-cycle .onLifeCycle=${onLifeCycle}></example-nested-life-cycle>
     </fieldset>
   `;
 }
@@ -58,29 +55,22 @@ customElements.define(
 );
 
 function ExampleNestedLifeCycle() {
-  // add a callback to be run during the constructor call
-  onCreated((element) => {
-    console.log("[LIFECYCLE NESTED] Created", element);
-  });
-
-  onAttributeChanged((element, name, oldValue, newValue) => {
-    console.log("[LIFECYCLE NESTED] AttributeChanged", { name, oldValue, newValue }, element);
-  });
-
-  // add a callback to be run just after the update has been rendered to the dom
-  onRendered((element) => {
-    console.log("[LIFECYCLE NESTED] Rendered", element);
-    return () => console.log("[LIFECYCLE NESTED] Rendered: clear previous", element);
-  });
+  const onLifeCycle = useMethod("onLifeCycle");
 
   // add a callback to be run during connectedCallback
   onConnected((element) => {
-    console.log("[LIFECYCLE NESTED] Connected", element);
+    onLifeCycle("onConnected", element);
   });
 
   // add a callback to be run when the element is removed
   onDisconnected((element) => {
-    console.log("[LIFECYCLE NESTED] Disconnected", element);
+    onLifeCycle("onDisconnected", element);
+  });
+
+  // add a callback to be run just after the update has been rendered to the dom
+  onRendered((element) => {
+    onLifeCycle("onRendered", element);
+    return () => onLifeCycle("onRendered (cleared)", element);
   });
 
   function removeHostFromDocument(target) {

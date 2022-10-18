@@ -110,11 +110,9 @@ interface ComponentOptions {
 ### Lifecycle hooks
 
 17. [onRendered](#onrendered)
-18. [onCreated](#oncreated)
-19. [onConnected](#onconnected)
-20. [onDisconnected](#ondisconnected)
-21. [onAttributeChanged](#onattributechanged)
-22. [onAdopted](#onadopted)
+18. [onConnected](#onconnected)
+19. [onDisconnected](#ondisconnected)
+20. [onAdopted](#onadopted)
 
 ## Data hooks
 
@@ -246,7 +244,7 @@ interface AttributeOptions<T> {
   set?: (value: T) => string;
 }
 
-function useAttribute<T>(attribute: string, options?: AttributeOptions<T>): [T, Setter<T>];
+function useAttribute<T>(name: string, options?: AttributeOptions<T>): [T, Setter<T>];
 ```
 
 ### useProperty
@@ -257,7 +255,7 @@ Bind the component to the given property so it rerenders when it changes.
 Returns the current value of the property along with a setter.
 
 ```typescript
-function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
+function useProperty<T>(name: string, defaultValue?: T): [T, Setter<T>];
 ```
 
 ### useMethod
@@ -267,11 +265,13 @@ function useProperty<T>(property: string, defaultValue?: T): [T, Setter<T>];
 Add a new method to the custom element object.
 It is useful if you want the dom element to expose an imperative API that has access to the private parts of the component like state and refs.
 
+If you do not provide a function as second argument, the hook will try to get the method with the same name already defined on the component. This is useful if you want some properties to be used like React callback props ([see the example](/examples/method.js))
+
 Deps can be specified if the function depends on the surrounding scope.
 If there are no deps, the method will only be bound once, during the element creation.
 
 ```typescript
-function useMethod<F extends Fn>(method: string, fn: F, deps?: Deps): F;
+function useMethod<F extends Fn>(name: string, fn?: F, deps?: Deps): F;
 ```
 
 ### useEvent
@@ -287,12 +287,9 @@ interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }
 
-function useEvent<E extends keyof HTMLElementEventMap>(
-  name: E,
-  options?: EventInit
-): DispatchEvent<undefined>;
+function useEvent<E extends keyof HTMLElementEventMap>(event: E, options?: EventInit): DispatchEvent<undefined>;
 
-function useEvent<T>(name: string, options?: CustomEventInit<T>): DispatchEvent<T>;
+function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent<T>;
 ```
 
 ### useEventListener
@@ -418,18 +415,6 @@ function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
 These hooks are different than the previous two ones because they are directly bound to the native lifecycle of the custom element. Because of that, they have no deps and also do not give you a "clean up" feature so be careful when using them.
 
-### onCreated
-
-The callback will be called inside the component constructor()
-
-```typescript
-interface LifeCycleCallback {
-  (element: HTMLElement): void;
-}
-
-function onCreated(createdCallback: LifeCycleCallback): void;
-```
-
 ### onConnected
 
 The callback will be called inside connectedCallback()
@@ -448,21 +433,6 @@ Here you should imperatively clear any listener, timeout or other async operatio
 
 ```typescript
 function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
-```
-
-### onAttributeChanged
-
-The callback will be called inside attributeChangedCallback(), so every time an observedAttribute changes in the DOM.
-
-```typescript
-function onAttributeChanged(
-  callback: (
-    element: HTMLElement,
-    name: string,
-    oldValue: string | null,
-    newValue: string | null
-  ) => void
-): void;
 ```
 
 ### onAdopted

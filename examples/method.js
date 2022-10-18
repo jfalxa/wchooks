@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { ref } from "https://unpkg.com/lit-html/directives/ref";
-import { Component, useRef, useMethod, useState, onCreated } from "../wchooks.mjs";
+import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
+import { Component, useMethod, useRef, useState, onConnected } from "../wchooks.mjs";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();
@@ -24,11 +24,22 @@ customElements.define("example-method-container", Component(ExampleMethodContain
 function ExampleMethod() {
   const [active, setActive] = useState(false);
 
+  // grab the .onChange property added to this element by its parent
+  const onChange = useMethod("onChange");
+
   // the method is bound to the element under the specified name
   // and it is also returned so we can access it in the rendering scope
-  const toggleCheckbox = useMethod("toggleCheckbox", () => setActive((active) => !active)); // can also have deps in case the used scope changes
+  const toggleCheckbox = useMethod(
+    "toggleCheckbox",
+    (forceActive) => {
+      const newActive = forceActive ?? !active;
+      setActive(newActive);
+      onChange?.(newActive);
+    },
+    [active]
+  );
 
-  onCreated((element) => {
+  onConnected((element) => {
     window.exampleMethod = element;
   });
 
@@ -36,7 +47,11 @@ function ExampleMethod() {
     <fieldset style="margin-top: 8px">
       <legend>child component with exposed method</legend>
       <button @click=${toggleCheckbox}>Toggle checkbox</button>
-      <input type="checkbox" .checked=${active} @change=${(e) => setActive(e.target.checked)} />
+      <input
+        type="checkbox"
+        .checked=${active}
+        @change=${(e) => toggleCheckbox(e.target.checked)}
+      />
       ${active ? "ON" : "OFF"}
     </fieldset>
   `;

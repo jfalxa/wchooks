@@ -24,11 +24,11 @@ function ExampleAsync() {
   return html`
     <fieldset>
       <legend><b>useAsync</b></legend>
-      <button @click=${() => todos.call({ delay: 1000 })}>Fetch data</button>
-      <button @click=${() => todos.call({ delay: 1000, shouldThrow: true })}>
+      <button id="call" @click=${() => todos.call({ delay: 1000 })}>Fetch data</button>
+      <button id="call-error" @click=${() => todos.call({ delay: 1000, shouldThrow: true })}>
         Fetch data with error
       </button>
-      <span>→ ${todos.loading ? "LOADING..." : summary}</span>
+      <span id="result">→ ${todos.loading ? "LOADING..." : summary}</span>
     </fieldset>
   `;
 }

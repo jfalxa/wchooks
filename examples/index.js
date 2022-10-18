@@ -19,7 +19,7 @@ function ExampleApp() {
     <p>→ You can read the source code directly inside your browser's dev-tools.</p>
 
     <section style="display: flex; flex-direction: column; gap: 24px;">
-      <example-counter></example-counter>
+      <example-state></example-state>
       <example-event></example-event>
       <example-attribute></example-attribute>
       <example-property></example-property>
@@ -28,7 +28,7 @@ function ExampleApp() {
       <example-async></example-async>
       <example-method-container></example-method-container>
       <example-template></example-template>
-      <example-life-cycle value="0"></example-life-cycle>
+      <example-life-cycle .onLifeCycle=${() => {}}></example-life-cycle>
     </section>
   `;
 }
