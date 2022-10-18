@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { check, render } from "./utils";
+import { checkout, render } from "./utils";
 
 import "../examples/event";
 
@@ -7,25 +7,25 @@ describe("Event hook", async () => {
   beforeEach(() => render("<example-event></example-event>"));
 
   it("should increment the counter when dispatching events", async () => {
-    const element = check("example-event");
+    const view = checkout("example-event");
 
-    await element.root.rendered;
+    await view.element.rendered;
 
-    const dispatchButton = element.get("#dispatch");
-    const counter = element.get("#counter");
+    const dispatchButton = view.get("#dispatch");
+    const counter = view.get("#counter");
 
-    await element.root.rendered;
+    await view.element.rendered;
     expect(counter.textContent).toBe("0");
 
     dispatchButton.click();
 
-    await element.root.rendered;
+    await view.element.rendered;
     expect(counter.textContent).toBe("1");
 
     dispatchButton.click();
     dispatchButton.click();
 
-    await element.root.rendered;
+    await view.element.rendered;
     expect(counter.textContent).toBe("3");
   });
 });

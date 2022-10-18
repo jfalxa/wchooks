@@ -5,6 +5,8 @@ import { Component, useMethod, useRef, useState, onConnected } from "../wchooks.
 function ExampleMethodContainer() {
   const methodRef = useRef();
 
+  const [active, setActive] = useState(false);
+
   function toggleCheckboxFromOutside() {
     methodRef.value.toggleCheckbox(); // access the property directly on the dom element
   }
@@ -12,9 +14,11 @@ function ExampleMethodContainer() {
   return html`
     <fieldset>
       <legend><b>useMethod</b></legend>
-      <button @click=${toggleCheckboxFromOutside}>Toggle checkbox from outside</button>
+      <button @click=${toggleCheckboxFromOutside}>
+        Toggle checkbox from outside <i id="checked">(checked=${active})</i>
+      </button>
       <span>→ try <code>window.exampleMethod.toggleCheckbox()</code> in the console</span>
-      <example-method ${ref(methodRef)}></example-method>
+      <example-method ${ref(methodRef)} .onChange=${(active) => setActive(active)}></example-method>
     </fieldset>
   `;
 }
@@ -52,7 +56,7 @@ function ExampleMethod() {
         .checked=${active}
         @change=${(e) => toggleCheckbox(e.target.checked)}
       />
-      ${active ? "ON" : "OFF"}
+      <span id="toggle">${active ? "ON" : "OFF"}</span>
     </fieldset>
   `;
 }

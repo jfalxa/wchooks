@@ -2,16 +2,16 @@ export function render(html) {
   document.body.innerHTML = html;
 }
 
-export function check(selector) {
-  const root = document.querySelector(selector);
-  if (root === null) throw new Error(`No element found with selector ${selector}`);
+export function checkout(selector) {
+  const element = document.querySelector(selector);
+  if (element === null) throw new Error(`No element found with selector ${selector}`);
 
   function query(selector) {
-    return root._root.querySelector(selector);
+    return element.renderRoot.querySelector(selector);
   }
 
   function queryAll(selector) {
-    return root._root.querySelectorAll(selector);
+    return element.renderRoot.querySelectorAll(selector);
   }
 
   function get(selector) {
@@ -26,7 +26,7 @@ export function check(selector) {
     return children;
   }
 
-  return { root, query, queryAll, get, getAll };
+  return { element, query, queryAll, get, getAll };
 }
 
 export function until(condition, options = {}) {

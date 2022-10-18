@@ -1,6 +1,6 @@
 import { html, render } from "lit-html";
 import { beforeEach, describe, expect, it } from "vitest";
-import { check } from "./utils";
+import { checkout } from "./utils";
 
 import "../examples/lifecycle";
 
@@ -18,52 +18,52 @@ describe("Lifecycle hooks", async () => {
   });
 
   it("should keep track of a component's lifecycle", async () => {
-    const element = check("example-life-cycle");
+    const view = checkout("example-life-cycle");
 
-    await element.root.rendered;
+    await view.element.rendered;
 
-    const nestedElement = element.get("example-nested-life-cycle");
+    const nestedElement = view.get("example-nested-life-cycle");
 
-    const updateButton = element.get("#update");
-    const removeButton = element.get("#remove");
+    const updateButton = view.get("#update");
+    const removeButton = view.get("#remove");
 
     expect(lifeCycleSteps.length).toBe(4);
 
     expect(lifeCycleSteps[0].step).toBe("onConnected");
-    expect(lifeCycleSteps[0].element).toBe(element.root);
+    expect(lifeCycleSteps[0].element).toBe(view.element);
 
     expect(lifeCycleSteps[1].step).toBe("onConnected");
     expect(lifeCycleSteps[1].element).toBe(nestedElement);
 
     expect(lifeCycleSteps[2].step).toBe("onRendered");
-    expect(lifeCycleSteps[2].element).toBe(element.root);
+    expect(lifeCycleSteps[2].element).toBe(view.element);
 
     expect(lifeCycleSteps[3].step).toBe("onRendered");
     expect(lifeCycleSteps[3].element).toBe(nestedElement);
 
     // force rerender
     updateButton.click();
-    await element.root.rendered;
+    await view.element.rendered;
 
     expect(lifeCycleSteps.length).toBe(6);
 
     expect(lifeCycleSteps[4].step).toBe("onRendered (cleared)");
-    expect(lifeCycleSteps[4].element).toBe(element.root);
+    expect(lifeCycleSteps[4].element).toBe(view.element);
 
     expect(lifeCycleSteps[5].step).toBe("onRendered");
-    expect(lifeCycleSteps[5].element).toBe(element.root);
+    expect(lifeCycleSteps[5].element).toBe(view.element);
 
     // force remove
     removeButton.click();
-    await element.root.rendered;
+    await view.element.rendered;
 
     expect(lifeCycleSteps.length).toBe(10);
 
     expect(lifeCycleSteps[6].step).toBe("onDisconnected");
-    expect(lifeCycleSteps[6].element).toBe(element.root);
+    expect(lifeCycleSteps[6].element).toBe(view.element);
 
     expect(lifeCycleSteps[7].step).toBe("onRendered (cleared)");
-    expect(lifeCycleSteps[7].element).toBe(element.root);
+    expect(lifeCycleSteps[7].element).toBe(view.element);
 
     expect(lifeCycleSteps[8].step).toBe("onDisconnected");
     expect(lifeCycleSteps[8].element).toBe(nestedElement);
