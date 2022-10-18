@@ -413,7 +413,7 @@ function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
 
 ## Life cycle hooks without clear method
 
-These hooks are different than the previous two ones because they are directly bound to the native lifecycle of the custom element. Because of that, they have no deps and also do not give you a "clean up" feature so be careful when using them.
+These hooks are different than the previous one because they are directly bound to the native lifecycle of the custom element. Because of that, they have no deps and also do not give you a "clean up" feature so be careful when using them.
 
 ### onConnected
 
