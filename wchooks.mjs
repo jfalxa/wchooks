@@ -4,13 +4,14 @@ export function Component(renderer, options = {}) {
   return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
-    _root;
+    renderRoot;
+
     _hooks = [];
     _updateRequested = false;
 
     constructor() {
       super();
-      this._root = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
+      this.renderRoot = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
       this.resetRendered(); // setup a promise that resolves only once all pending updates have been applied
     }
 
@@ -70,7 +71,11 @@ export function Component(renderer, options = {}) {
     };
 
     appendStyles = () => {
-      this.forEachHook("style", (style) => this._root.append(style));
+      this.forEachHook("style", (style) => this.renderRoot.append(style));
+    };
+
+    resetRendered = () => {
+      this.rendered = new Promise((resolve) => (this.resolveRendered = resolve));
     };
 
     requestUpdate = async () => {
@@ -97,12 +102,8 @@ export function Component(renderer, options = {}) {
     render = () => {
       const templateResult = this.callRenderer();
       const _render = options.render ?? render;
-      return _render(templateResult, this._root);
+      return _render(templateResult, this.renderRoot);
     };
-
-    resetRendered() {
-      this.rendered = new Promise((resolve) => (this.resolveRendered = resolve));
-    }
   };
 }
 
@@ -193,9 +194,10 @@ export function useProperty(name, initialValue) {
   // as soon as the component is created, setup a proxy to the property to allow tracking its updates
   onConnected((element) => observeProperty(element, name, initialValue));
 
-  const property = element[name] ?? initialValue;
-
   const setProperty = element.registerHook(index, "property", () => {
+    // initialize the property during registration
+    element[name] = element[name] ?? initialValue;
+
     return function setProperty(value) {
       const oldValue = element[name];
       const nextValue = resolveData(value, oldValue);
@@ -203,7 +205,7 @@ export function useProperty(name, initialValue) {
     };
   });
 
-  return [property, setProperty];
+  return [element[name], setProperty];
 }
 
 export function useMethod(name, method, deps) {
@@ -231,7 +233,7 @@ export function useQuerySelector(selector, deps) {
 
   // udpate the ref with a new query result every time the deps change
   onRendered((element) => {
-    ref.value = element._root.querySelector(selector);
+    ref.value = element.renderRoot.querySelector(selector);
   }, deps);
 
   return ref;
@@ -242,7 +244,7 @@ export function useQuerySelectorAll(selector, deps) {
 
   // udpate the ref with a new query result every time the deps change
   onRendered((element) => {
-    ref.value = element._root.querySelectorAll(selector);
+    ref.value = element.renderRoot.querySelectorAll(selector);
   }, deps);
 
   return ref;
@@ -293,8 +295,8 @@ export function useEventDelegation(selector, event, callback, deps, options) {
     // run the callback only if the target matches the selector
     const _callback = (e) => e.target.closest?.(selector) && callback(e);
 
-    element._root.addEventListener(event, _callback, options);
-    return () => element._root.removeEventListener(event, _callback, options);
+    element.renderRoot.addEventListener(event, _callback, options);
+    return () => element.renderRoot.removeEventListener(event, _callback, options);
   }, deps);
 }
 
