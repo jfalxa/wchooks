@@ -16,7 +16,17 @@ function ExampleApp() {
   return html`
     <h1>Examples of wchooks components</h1>
 
-    <p>→ You can read the source code directly inside your browser's dev-tools.</p>
+    <p>
+      <b>Documentation</b> →
+      <a href="https://github.com/jfalxa/wchooks" target="_blank">
+        https://github.com/jfalxa/wchooks
+      </a>
+    </p>
+
+    <p>
+      → You can read the source code directly inside your browser's dev-tools and play around with
+      the debugger.
+    </p>
 
     <section style="display: flex; flex-direction: column; gap: 24px;">
       <example-state></example-state>
