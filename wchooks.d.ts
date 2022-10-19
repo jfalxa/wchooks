@@ -110,6 +110,14 @@ export function useQuerySelector<E extends Element>(selector: string): Ref<E | n
 
 export function useQuerySelectorAll<E extends Element>(selector: string): Ref<NodeListOf<E>>;
 
+export function useAssignedElements<E extends Element>(
+  selection: {
+    slot?: string;
+    selector?: string;
+  },
+  deps?: Deps
+): Ref<E[]>;
+
 export interface LifeCycleCallback {
   (element: HTMLElement): void;
 }

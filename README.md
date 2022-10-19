@@ -106,13 +106,14 @@ interface ComponentOptions {
 14. [useTemplate](#usetemplate)
 15. [useQuerySelector](#usequeryselector)
 16. [useQuerySelectorAll](#usequeryselectorall)
+17. [useAssignedElements](#useassignedelements)
 
 ### Lifecycle hooks
 
-17. [onRendered](#onrendered)
-18. [onConnected](#onconnected)
-19. [onDisconnected](#ondisconnected)
-20. [onAdopted](#onadopted)
+18. [onRendered](#onrendered)
+19. [onConnected](#onconnected)
+20. [onDisconnected](#ondisconnected)
+21. [onAdopted](#onadopted)
 
 ## Data hooks
 
@@ -388,6 +389,25 @@ If no deps are passed, the query will be done on every render.
 ```typescript
 function useQuerySelectorAll<E extends Element>(selector: string, deps?: Deps): Ref<NodeListOf<E>>;
 ```
+
+### useAssignedElements
+
+[→ See the example](/examples/slot.js)
+
+Queries the given slot for its assigned elements.
+
+If a selector is provided,
+
+If no slot name is provided, the default nameless slot will be used.
+
+
+```typescript
+interface Selection {
+  slot?: string;
+  selector?: string;
+}
+
+function useAssignedElements<E extends Element>(selection: Selection, deps?: Deps): Ref<E[]>;```
 
 ## Life cycle hooks
 

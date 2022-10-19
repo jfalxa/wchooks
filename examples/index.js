@@ -11,6 +11,7 @@ import "./style.js";
 import "./async.js";
 import "./method.js";
 import "./template.js";
+import "./slot.js";
 
 function ExampleApp() {
   return html`
@@ -38,6 +39,7 @@ function ExampleApp() {
       <example-async></example-async>
       <example-method-container></example-method-container>
       <example-template></example-template>
+      <example-slot-container></example-slot-container>
       <example-life-cycle .onLifeCycle=${() => {}}></example-life-cycle>
     </section>
   `;

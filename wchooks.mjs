@@ -250,6 +250,26 @@ export function useQuerySelectorAll(selector, deps) {
   return ref;
 }
 
+export function useAssignedElements({ slot, selector }, deps) {
+  const ref = useRef([]);
+
+  // udpate the ref with a new query result every time the deps change
+  onRendered((element) => {
+    const slotSelector = slot ? `slot[name="${slot}"]` : "slot:not([name])";
+    const slotElement = element.renderRoot.querySelector(slotSelector);
+
+    ref.value = slotElement.assignedElements({ flatten: true });
+
+    if (selector) {
+      ref.value = ref.value
+        .flatMap((el) => [el.matches(selector) ? el : null, ...el.querySelectorAll(selector)])
+        .filter(Boolean);
+    }
+  }, deps);
+
+  return ref;
+}
+
 export function useTemplate(html) {
   // create the template only once with the given HTML
   return useMemoize(() => {
