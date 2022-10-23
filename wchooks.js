@@ -130,39 +130,6 @@ export function useRef(initialValue) {
 }
 
 /**
- * Only recreate the value when the deps change.
- *
- * If no deps are specified, the value will be created only once and won't ever change.
- *
- * The array of deps is otherwise spread as arguments of the callback function.
- * This allows you to define your callback function outside the scope of your component,
- * hence allowing you to enforce a clear list of deps for this function.
- *
- * You can also specify a custom `isEqual` function as last argument
- * that will compare new props with old props in order to confirm that they have changed.
- *
- * @template T
- * @template {any[]} D
- * @param {(...deps: D) => T} createValue A function that will create for the given deps
- * @param {D} deps A list of deps that will cause the hook to recreate the value when they change
- * @param {IsEqual<D>} isEqual A function to compare two successive versions of deps
- * @returns {T} The memoized value
- */
-export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
-  const element = Hooks.getContext();
-  const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
-  const previous = element.getHook(index);
-
-  // update hook value when deps change, and only once if no deps are provided
-  if (!isEqual(deps, previous.deps)) {
-    element.setHook(index, { deps, value: createValue(...deps) });
-  }
-
-  // extrat the actual value from current hook cache
-  return element.getHook(index).value;
-}
-
-/**
  * A function that dispatches an action that will be interpreted by a reducer
  *
  * @template A
@@ -232,19 +199,36 @@ export function useState(createState) {
 }
 
 /**
- * Create a complex state stored in an object.
+ * Only recreate the value when the deps change.
  *
- * Calling the returned setter will shallow merge the given arguments with the previous state.
+ * If no deps are specified, the value will be created only once and won't ever change.
  *
- * The passed `createStore` can be a function. In that case, it will receive 2 arguments `(dispatch, getState)`.
- * This allows you to define store methods that can modify the state.
+ * The array of deps is otherwise spread as arguments of the callback function.
+ * This allows you to define your callback function outside the scope of your component,
+ * hence allowing you to enforce a clear list of deps for this function.
  *
- * @template {{ [key: string]: any }} T
- * @param {T | StateInit<T, SetState<Partial<T>>>} createStore The initial store or a function to create it.
- * @returns {[T, Dispatch<SetState<Partial<T>>>]} A couple with the current store and the setter to update it.
+ * You can also specify a custom `isEqual` function as last argument
+ * that will compare new props with old props in order to confirm that they have changed.
+ *
+ * @template T
+ * @template {any[]} D
+ * @param {(...deps: D) => T} createValue A function that will create for the given deps
+ * @param {D} deps A list of deps that will cause the hook to recreate the value when they change
+ * @param {IsEqual<D>} isEqual A function to compare two successive versions of deps
+ * @returns {T} The memoized value
  */
-export function useStore(createStore) {
-  return useReducer(createStore, (state, partial) => ({ ...state, ...resolve(partial, state) }));
+export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
+  const element = Hooks.getContext();
+  const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
+  const previous = element.getHook(index);
+
+  // update hook value when deps change, and only once if no deps are provided
+  if (!isEqual(deps, previous.deps)) {
+    element.setHook(index, { deps, value: createValue(...deps) });
+  }
+
+  // extrat the actual value from current hook cache
+  return element.getHook(index).value;
 }
 
 /**
@@ -285,11 +269,10 @@ export function useStore(createStore) {
 export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
   const cancelRef = useRef(() => {});
 
-  const [state, setState] = useStore({
-    loading: false,
-    value: undefined,
-    error: undefined,
-  });
+  const [state, setState] = useReducer(
+    { loading: false, value: undefined, error: undefined },
+    (oldState, newState) => ({ ...oldState, ...newState })
+  );
 
   // call the async function and track its evolution in the state
   const call = useMemoize(

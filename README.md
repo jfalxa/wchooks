@@ -88,20 +88,19 @@ interface HookedOptions {
 1. [useRef](#useref)
 2. [useState](#usestate)
 3. [useReducer](#usereducer)
-4. [useStore](#usestore)
-5. [useMemoize](#usememoize)
-6. [useAsync](#useasync)
+4. [useMemoize](#usememoize)
+5. [useAsync](#useasync)
 
 ### HTMLElement hooks
 
-7. [useAttributes](#useattributes)
-8. [useProperties](#useproperties)
-9. [useEvent](#useevent)
+6. [useAttributes](#useattributes)
+7. [useProperties](#useproperties)
+8. [useEvent](#useevent)
 
 ### Lifecycle hooks
 
-10. [onUpdated](#onupdated)
-11. [onRendered](#onrendered)
+9. [onUpdated](#onupdated)
+10. [onRendered](#onrendered)
 
 ## Data hooks
 
@@ -125,7 +124,7 @@ function useRef<T>(initialValue: T): Ref<T>;
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
-Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useStore`, `useAttributes` and `useProperties`.
+Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useAttributes` and `useProperties`.
 
 ```typescript
 interface Setter<T> {
