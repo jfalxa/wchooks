@@ -1,19 +1,22 @@
 const Hooks = createHookContext();
 
 /**
- * @typedef {{
- *  Element?: typeof HTMLElement,
- *  observedAttributes?: string[],
- *  attachRoot?: (element: HTMLElement) => ParentNode
- * }} HookedOptions
+ * Options to customize the behavior of the `Hooked` factory
+ *
+ * @typedef {Object} HookedOptions
+ * @property {typeof HTMLElement=} Element Base element class that your component should extend
+ * @property {string[]=} observedAttributes List of attributes that should trigger an update when they change
+ * @property {(element: HTMLElement) => ParentNode=} attachRoot Function to pick a rendering root different than the default open `shadowRoot`
  */
 
 /**
+ * The `Hooked` factory allows you to build a custom `HTMLElement` that can work with hooks.
+ *
  * @template T
- * @param {() => T} renderer
- * @param {(template: T, root: ParentNode) => void} render
- * @param {HookedOptions=} options
- * @returns {CustomElementConstructor}
+ * @param {() => T} renderer A function that can run hooks and return a template that will be rendered with the passed `render` function
+ * @param {(template: T, root: ParentNode) => void} render A function that renders a template genereated by the `renderer` function inside the given element in the DOM
+ * @param {HookedOptions=} options Options to customize the behavior of the `Hooked` factory
+ * @returns {CustomElementConstructor} A constructor for a custom element that will run hooks
  */
 export function Hooked(renderer, render, options = {}) {
   return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
@@ -106,9 +109,19 @@ export function Hooked(renderer, render, options = {}) {
 }
 
 /**
+ * A static reference to some value
+ *
  * @template T
- * @param {T} initialValue
- * @returns {{ value: T }}
+ * @typedef {{value: T}} Ref
+ */
+
+/**
+ * Create a reference to an object that will remain at the same address for the whole life of the component.
+ * The value is then accessible through `ref.value`.
+ *
+ * @template T
+ * @param {T} initialValue The initial value to be saved in the ref
+ * @returns {Ref<T>} A static reference to a value
  */
 export function useRef(initialValue) {
   const element = Hooks.getContext();
@@ -117,20 +130,31 @@ export function useRef(initialValue) {
 }
 
 /**
+ * Only recreate the value when the deps change.
+ *
+ * If no deps are specified, the value will be created only once and won't ever change.
+ *
+ * The array of deps is otherwise spread as arguments of the callback function.
+ * This allows you to define your callback function outside the scope of your component,
+ * hence allowing you to enforce a clear list of deps for this function.
+ *
+ * You can also specify a custom `isEqual` function as last argument
+ * that will compare new props with old props in order to confirm that they have changed.
+ *
  * @template T
  * @template {any[]} D
- * @param {(...deps: D) => T} createValue
- * @param {D} deps
- * @param {IsEqual<D>} isEqual
- * @returns {T}
+ * @param {(...deps: D) => T} createValue A function that will create for the given deps
+ * @param {D} deps A list of deps that will cause the hook to recreate the value when they change
+ * @param {IsEqual<D>} isEqual A function to compare two successive versions of deps
+ * @returns {T} The memoized value
  */
-export function useMemoize(createValue, deps, isEqual = isShallowEqual) {
+export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
   const element = Hooks.getContext();
   const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
   const previous = element.getHook(index);
 
   // update hook value when deps change, and only once if no deps are provided
-  if (!isEqual(deps ?? [], previous.deps ?? [])) {
+  if (!isEqual(deps, previous.deps)) {
     element.setHook(index, { deps, value: createValue(...deps) });
   }
 
@@ -139,22 +163,34 @@ export function useMemoize(createValue, deps, isEqual = isShallowEqual) {
 }
 
 /**
+ * A function that dispatches an action that will be interpreted by a reducer
+ *
  * @template A
  * @typedef {(action: A) => void} Dispatch
  */
 
 /**
+ * A function to create the initial state of a reducer
+ *
  * @template T
  * @template A
  * @typedef {(dispatch: Dispatch<A>, getState: () => T) => T} StateInit
  */
 
 /**
+ * Create a state managed by a reducer that returns the current value and a dispatch function to change it.
+ *
+ * When called, the dispatch function will run the reducer by taking the current state and the argument given to dispatch.
+ * The result will be the new state.
+ *
+ * The passed `initialState` can be a function. In that case, it will receive 2 arguments `(dispatch, getState)`.
+ * This allows you to define methods inside your state that can modify this state.
+ *
  * @template T
  * @template A
- * @param {T | StateInit<T, A>} initialState
- * @param {(state: T, action: A) => void} reducer
- * @returns {[T, Dispatch<A>]}
+ * @param {T | StateInit<T, A>} initialState The initial state or a function to create it
+ * @param {(state: T, action: A) => void} reducer The reducer that will update state according to actions
+ * @returns {[T, Dispatch<A>]} A couple with the current state and the dispatch function
  */
 export function useReducer(initialState, reducer) {
   const element = Hooks.getContext();
@@ -178,95 +214,152 @@ export function useReducer(initialState, reducer) {
 }
 
 /**
+ * Allowed params for the setState method
+ *
  * @template T
  * @typedef {T | ((value: T) => T)} SetState
  */
 
 /**
+ * Create a dynamic state that triggers an update when modified with the returned setter.
+ *
  * @template T
- * @param {T | (() => T)} createState
- * @returns {[T, Dispatch<SetState<T>>]}
+ * @param {T | (() => T)} createState The initial state or a function to create it.
+ * @returns {[T, Dispatch<SetState<T>>]} A couple with the current state and the setter to update it
  */
 export function useState(createState) {
   return useReducer(resolve(createState), (oldState, newState) => resolve(newState, oldState));
 }
 
 /**
- * @template T
- * @param {T | StateInit<T, SetState<Partial<T>>>} createStore
- * @returns {[T, Dispatch<SetState<Partial<T>>>]}
+ * Create a complex state stored in an object.
+ *
+ * Calling the returned setter will shallow merge the given arguments with the previous state.
+ *
+ * The passed `createStore` can be a function. In that case, it will receive 2 arguments `(dispatch, getState)`.
+ * This allows you to define store methods that can modify the state.
+ *
+ * @template {{ [key: string]: any }} T
+ * @param {T | StateInit<T, SetState<Partial<T>>>} createStore The initial store or a function to create it.
+ * @returns {[T, Dispatch<SetState<Partial<T>>>]} A couple with the current store and the setter to update it.
  */
 export function useStore(createStore) {
   return useReducer(createStore, (state, partial) => ({ ...state, ...resolve(partial, state) }));
 }
 
 /**
+ * A function that returns a Promise
+ *
  * @typedef {(...args: any[]) => Promise<any>} AsyncFn
  */
 
 /**
+ * Extract the type of the return value of an async function
+ *
  * @template {AsyncFn} F
  * @typedef {F extends (...args: any[]) => Promise<infer T> ? T : never} PromiseType
  */
 
 /**
+ * Store the current state of an async operation
+ *
  * @template {AsyncFn} F
  * @typedef  {{
  *  loading: boolean,
  *  value: PromiseType<F> | undefined,
  *  error: Error | undefined,
- *  cancel: () => void,
  *  call: F
  * }} Async
  */
 
 /**
+ * A hook to track the changes in the evolution of an async function call.
+ *
+ * The if deps are given, the async function will be memoized using them and the optional isEqual argument.
+ *
  * @template {AsyncFn} F
- * @param {F} asyncFn
- * @returns {Async<F>}
+ * @param {F} asyncFn A function that returns a promise
+ * @returns {Async<F>} A controller for the given async function
  */
-export function useAsync(asyncFn) {
-  const createAsyncStore = (setState, getState) => ({
-    // state to track the evolution of the async operation
+export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
+  const cancelRef = useRef(() => {});
+
+  const [store, setStore] = useStore({
     loading: false,
     value: undefined,
     error: undefined,
-
-    // calling this method will cancel the last call of the async method
-    cancel() {},
-
-    // call the async function and track its evolution in the state
-    async call(...args) {
-      // cancel last call so it cannot update the state during newer calls
-      getState().cancel();
-
-      // prepare the function to cancel this call
-      let cancelled = false;
-      const cancel = () => (cancelled = true);
-
-      try {
-        if (!cancelled) setState({ loading: true, cancel });
-        const value = await asyncFn(...args);
-        if (!cancelled) setState({ loading: false, error: undefined, value });
-        return value;
-      } catch (error) {
-        if (!cancelled) setState({ loading: false, value: undefined, error });
-      }
-    },
   });
 
-  return useStore(createAsyncStore)[0];
+  const call = useMemoize(
+    (...deps) =>
+      async (...args) => {
+        // call the async function and track its evolution in the state
+        // cancel last call so it cannot update the state during newer calls
+        cancelRef.value();
+
+        // prepare the function to cancel this call
+        let cancelled = false;
+        cancelRef.value = () => (cancelled = true);
+
+        try {
+          if (!cancelled) setStore({ loading: true });
+          const value = await asyncFn(...args, ...deps);
+          if (!cancelled) setStore({ loading: false, error: undefined, value });
+          return value;
+        } catch (error) {
+          if (!cancelled) setStore({ loading: false, value: undefined, error });
+        }
+      },
+    deps,
+    isEqual
+  );
+
+  return { ...store, call };
 }
 
 /**
- * @template {{ [name: string]: any }} A
- * @typedef {{ [name in keyof A]: A[name] }} Attributes
+ * A custom attribute getter/setter
+ *
+ * @template T
+ * @typedef {Object} CustomAttribute
+ * @property {T} defaultValue Default value of the attribute during initialization
+ * @property {(attribute: string) => T} get Parse the attribute DOM string into the wanted type
+ * @property {(value: T) => string} set Stringify the value into a string for the DOM
  */
 
 /**
+ * Extract the value type from an attribute's default value
+ *
+ * @template A
+ * @typedef {A extends (() => CustomAttribute<infer T>) ? T : A} CustomAttributeValue
+ */
+
+/**
+ * Actual type of attributes, with custom ones flattened.
+ *
+ * @template {{[name: string]: any}} A
+ * @typedef {{ [name in keyof A]: CustomAttributeValue<A[name]>}} Attributes
+ */
+
+/**
+ * Setup many attributes on a component.
+ *
+ * For these attributes to trigger update when they change, they should be added to the component `observedAttributes`.
+ *
+ * The attributes default values passed as argument will be used to guess the kind of parsing/serialization needed to interact with the attribute in the DOM.
+ *
+ * For example, if we have `{ "my-flag": true }`, the attribute will be shown as `"my-flag"=""` in the DOM.
+ * If we have `{ "my-flag": false }`, the attribute will be removed.
+ *
+ * You can also customize the parsing/serialization by passing a function as default value.
+ * This function should return an object with 3 keys:
+ * - defaultValue: the initial value for this attribute
+ * - get: a function that parses the attribute DOM string into the wanted value
+ * - set: a function that serializes a value into a string to be written in the DOM
+ *
  * @template {{ [name: string]: any }} A
- * @param {Attributes<A>} attributes
- * @returns {[Attributes<A>, (values: Partial<Attributes<A>>) => void]}
+ * @param {A} attributes A list of default values for some attributes
+ * @returns {[Attributes<A>, (values: Attributes<Partial<A>>) => void]} A couple with the current attributes value and a function to update them
  */
 export function useAttributes(attributes) {
   const element = Hooks.getContext();
@@ -305,14 +398,17 @@ export function useAttributes(attributes) {
 }
 
 /**
+ * Bind a list of properties to the current element.
+ *
+ * The properties are initialized with the given default value.
+ * Then, any time they'll be modified, it will trigger an update.
+ *
+ * These properties are then accessible directly on the DOM element, wether they are values or functions.
+ * This allows you to build an API to control your component from the outside.
+ *
  * @template {{ [name: string]: any }} P
- * @typedef {{ [name in keyof P]: P[name] }} Properties
- */
-
-/**
- * @template {{ [name: string]: any }} P
- * @param {Properties<P>} properties
- * @returns {[Properties<P>, (values: Partial<Properties<P>>) => void]}
+ * @param {P} properties A list of default values for some properties
+ * @returns {[P, (values: Partial<P>) => void]} A couple with the current values of properties and a function to update them
  */
 export function useProperties(properties) {
   const element = Hooks.getContext();
@@ -350,15 +446,20 @@ export function useProperties(properties) {
 }
 
 /**
+ * A function that dispatches an event with the given options.
+ *
  * @template T
  * @typedef {(options?: CustomEventInit<T>) => CustomEvent<T>} DispatchEvent
  */
 
 /**
+ * Create an event dispatcher function that when called will dispatch the specified event with the given options.
+ * These options can still be overriden when calling the dispatcher.
+ *
  * @template T
- * @param {string} event
- * @param {CustomEventInit<T>=} options
- * @returns {DispatchEvent<T>}
+ * @param {string} event The name of the event to dispatch
+ * @param {CustomEventInit<T>=} options The options to dispatch the event with
+ * @returns {DispatchEvent<T>} A function to dispatch the wanted event
  */
 export function useEvent(event, options) {
   const element = Hooks.getContext();
@@ -376,27 +477,49 @@ export function useEvent(event, options) {
 }
 
 /**
+ * A callback to a lifecycle event.
+ *
  * @template {any[]} D
  * @typedef {(element: HTMLElement, ...deps: D) => void} LifeCycleCallback
  */
 
 /**
+ * A lifecycle hook that will run after a batch of update has finished but has not yet been rendered to the DOM.
+ *
+ * If no deps are specified, the callback will be run after every update.
+ *
+ * The array of deps is otherwise spread as arguments of the callback function.
+ * This allows you to define your callback function outside the scope of your component,
+ * hence allowing you to enforce a clear list of deps for this function.
+ *
+ * You can also specify a custom `isEqual` function as last argument
+ * that will compare new props with old props in order to confirm that they have changed.
+ *
  * @template {any[]} D
- * @param {LifeCycleCallback<D>} updatedCallback
- * @param {D=} deps
- * @param {IsEqual<D>=} isEqual
- * @returns {void}
+ * @param {LifeCycleCallback<D>} updatedCallback A callback to be run after an update but before render
+ * @param {D=} deps A list of deps to limit when the callback will be called
+ * @param {IsEqual<D>=} isEqual A function to check if deps have changed
  */
 export function onUpdated(updatedCallback, deps, isEqual) {
   useLifeCycleWithDeps("updated", updatedCallback, deps, isEqual);
 }
 
 /**
+ * A lifecycle hook that will run after a batch of update has been rendered to the DOM.
+ *
+ * If no deps are specified, the callback will be run after every update.
+ *
+ * The array of deps is otherwise spread as arguments of the callback function.
+ * This allows you to define your callback function outside the scope of your component,
+ * hence allowing you to enforce a clear list of deps for this function.
+ *
+ * You can also specify a custom `isEqual` function as last argument
+ * that will compare new props with old props in order to confirm that they have changed.
+ *
  * @template {any[]} D
- * @param {LifeCycleCallback<D>} renderedCallback
- * @param {D=} deps
- * @param {IsEqual<D>=} isEqual
- * @returns {void}
+ * @param {LifeCycleCallback<D>} renderedCallback A callback to be run after render
+ * @param {D=} deps A list of deps to limit when the callback will be called
+ * @param {IsEqual<D>=} isEqual A function to check if deps have changed
  */
 export function onRendered(renderedCallback, deps, isEqual) {
   useLifeCycleWithDeps("rendered", renderedCallback, deps, isEqual);
