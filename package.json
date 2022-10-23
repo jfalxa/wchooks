@@ -8,9 +8,11 @@
   "type": "module",
   "main": "wchooks.js",
   "types": "wchooks.d.ts",
+  "unpkg": "wchooks.min.js",
   "files": [
     "wchooks.js",
-    "wchooks.d.ts"
+    "wchooks.d.ts",
+    "wchooks.min.js"
   ],
   "repository": {
     "type": "git",
