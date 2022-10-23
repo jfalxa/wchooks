@@ -75,16 +75,16 @@ describe("Lifecycle hooks", async () => {
 
     expect(lifeCycleSteps.length).toBe(16);
 
-    expect(lifeCycleSteps[12].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[12].step).toBe("onRendered 2. (cleared)");
     expect(lifeCycleSteps[12].element).toBe(view.element);
 
-    expect(lifeCycleSteps[13].step).toBe("onRendered 2. (cleared)");
+    expect(lifeCycleSteps[13].step).toBe("onUpdated 2. (cleared)");
     expect(lifeCycleSteps[13].element).toBe(view.element);
 
-    expect(lifeCycleSteps[14].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[14].step).toBe("onRendered 2. (cleared)");
     expect(lifeCycleSteps[14].element).toBe(nestedElement);
 
-    expect(lifeCycleSteps[15].step).toBe("onRendered 2. (cleared)");
+    expect(lifeCycleSteps[15].step).toBe("onUpdated 2. (cleared)");
     expect(lifeCycleSteps[15].element).toBe(nestedElement);
   });
 });
