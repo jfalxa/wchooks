@@ -27,10 +27,10 @@ describe("Lifecycle hooks", async () => {
 
     expect(lifeCycleSteps.length).toBe(2);
 
-    expect(lifeCycleSteps[0].step).toBe("onUpdated 1.");
+    expect(lifeCycleSteps[0].step).toBe("useEffect 1.");
     expect(lifeCycleSteps[0].element).toBe(view.element);
 
-    expect(lifeCycleSteps[1].step).toBe("onUpdated 1.");
+    expect(lifeCycleSteps[1].step).toBe("useEffect 1.");
     expect(lifeCycleSteps[1].element).toBe(nestedElement);
 
     // force rerender
@@ -39,16 +39,16 @@ describe("Lifecycle hooks", async () => {
 
     expect(lifeCycleSteps.length).toBe(6);
 
-    expect(lifeCycleSteps[2].step).toBe("onUpdated 1. (cleared)");
+    expect(lifeCycleSteps[2].step).toBe("useEffect 1. (cleared)");
     expect(lifeCycleSteps[2].element).toBe(view.element);
 
-    expect(lifeCycleSteps[3].step).toBe("onUpdated 2.");
+    expect(lifeCycleSteps[3].step).toBe("useEffect 2.");
     expect(lifeCycleSteps[3].element).toBe(view.element);
 
-    expect(lifeCycleSteps[4].step).toBe("onUpdated 1. (cleared)");
+    expect(lifeCycleSteps[4].step).toBe("useEffect 1. (cleared)");
     expect(lifeCycleSteps[4].element).toBe(nestedElement);
 
-    expect(lifeCycleSteps[5].step).toBe("onUpdated 2.");
+    expect(lifeCycleSteps[5].step).toBe("useEffect 2.");
     expect(lifeCycleSteps[5].element).toBe(nestedElement);
 
     // force remove
@@ -57,10 +57,10 @@ describe("Lifecycle hooks", async () => {
 
     expect(lifeCycleSteps.length).toBe(8);
 
-    expect(lifeCycleSteps[6].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[6].step).toBe("useEffect 2. (cleared)");
     expect(lifeCycleSteps[6].element).toBe(view.element);
 
-    expect(lifeCycleSteps[7].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[7].step).toBe("useEffect 2. (cleared)");
     expect(lifeCycleSteps[7].element).toBe(nestedElement);
   });
 });

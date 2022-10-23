@@ -49,7 +49,7 @@ export function Hooked(renderer, render, options = {}) {
     }
 
     disconnectedCallback() {
-      this.clearUpdatedCallbacks();
+      this.clearEffects();
     }
 
     getHook = (index) => {
@@ -67,15 +67,15 @@ export function Hooked(renderer, render, options = {}) {
       return index;
     };
 
-    runUpdatedCallbacks = () => {
+    runEffects = () => {
       this.hooks
-        .filter((hook) => hook.type === "updated")
+        .filter((hook) => hook.type === "effect") //
         .forEach((hook) => hook.data.callback?.());
     };
 
-    clearUpdatedCallbacks = () => {
+    clearEffects = () => {
       this.hooks
-        .filter((hook) => hook.type === "updated")
+        .filter((hook) => hook.type === "effect")
         .forEach((hook) => hook.data.clearCallback?.());
     };
 
@@ -95,7 +95,7 @@ export function Hooked(renderer, render, options = {}) {
         this.updateRequested = false;
         this.render(); // that way render() will be called only once, after all other sync updates are done
         this.resolveUpdated?.();
-        this.runUpdatedCallbacks();
+        this.runEffects();
       }
     };
 
@@ -465,7 +465,7 @@ export function useEvent(event, options) {
  * A callback to a lifecycle event.
  *
  * @template {any[]} D
- * @typedef {(element: HTMLElement, ...deps: D) => void | (() => void)} LifeCycleCallback
+ * @typedef {(element: HTMLElement, ...deps: D) => void | (() => void)} EffectCallback
  */
 
 /**
@@ -481,21 +481,21 @@ export function useEvent(event, options) {
  * that will compare new deps with old deps in order to confirm that they have changed.
  *
  * @template {any[]} D
- * @param {LifeCycleCallback<D>} updatedCallback A callback to be run after an update
+ * @param {EffectCallback<D>} effectCallback A callback to be run after an update
  * @param {D=} deps A list of deps to limit when the callback will be called
  * @param {IsEqual<D>=} isEqual A function to check if deps have changed
  */
-export function onUpdated(updatedCallback, deps, isEqual = isShallowEqual) {
+export function useEffect(effectCallback, deps, isEqual = isShallowEqual) {
   const element = Hooks.getContext();
 
-  const index = element.registerHook("updated", () => ({}));
+  const index = element.registerHook("effect", () => ({}));
   const previous = element.getHook(index);
 
   // rerun side effect only if deps have changed
   function callback() {
     if (!isEqual(deps, previous.deps)) {
       if (previous.clearCallback) previous.clearCallback();
-      const clearCallback = updatedCallback(element, ...(deps ?? []));
+      const clearCallback = effectCallback(element, ...(deps ?? []));
       element.setHook(index, { callback, clearCallback, deps });
     }
   }

@@ -1,7 +1,7 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
 import { useEvent } from "../wchooks.js";
-import { Hooked, useRef, useState, useProperties, onUpdated } from "../wchooks.js";
+import { Hooked, useRef, useState, useProperties, useEffect } from "../wchooks.js";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();
@@ -40,7 +40,7 @@ function ExampleMethod() {
     },
   });
 
-  onUpdated((element) => {
+  useEffect((element) => {
     window.exampleMethod = element;
   }, []);
 

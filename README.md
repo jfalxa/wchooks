@@ -27,12 +27,12 @@ A counter with a button to increment its value:
 
 ```js
 import { html, render } from "lit-html";
-import { Hooked, useState, onUpdated } from "wchooks";
+import { Hooked, useState, useEffect } from "wchooks";
 
 const Counter = () => {
   const [counter, setCounter] = useState(0);
 
-  onUpdated(() => {
+  useEffect(() => {
     console.log("counter rendered:", counter);
   }, [counter]);
 
@@ -99,7 +99,7 @@ interface HookedOptions {
 
 ### Lifecycle hooks
 
-9. [onUpdated](#onupdated)
+9. [useEffect](#useEffect)
 
 ## Data hooks
 
@@ -271,7 +271,7 @@ function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent
 
 [→ See the example](/examples/lifecycle.js)
 
-### onUpdated
+### useEffect
 
 This hook will run a callback right after an update (modification of state, property, attribute, etc) has been rendered to the DOM.
 
@@ -279,12 +279,12 @@ Every time the deps change, it will be called again. Providing no deps will make
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
-When the `onUpdated` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
+When the `useEffect` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
 
 For this reason, when your effect has too many dependencies, it is recommended to define your callback function outside the scope of the component, this will limit the amount of bugs coming from stale closure.
 
 ```typescript
-type LifeCycleCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
+type EffectCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
 
-function onUpdated<D extends any[]>(updatedCallback: LifeCycleCallback<D>, deps?: D): void;
+function useEffect<D extends any[]>(effectCallback: EffectCallback<D>, deps?: D): void;
 ```
