@@ -273,9 +273,10 @@ export function useStore(createStore) {
  */
 
 /**
- * A hook to track the changes in the evolution of an async function call.
+ * Creates a wrapper around an async function that allows tracking the evolution of the async operation
+ * while preventing racing conditions between consecutive calls.
  *
- * The if deps are given, the async function will be memoized using them and the optional isEqual argument.
+ * If deps are given, the async function will be memoized using them and the optional isEqual argument.
  *
  * @template {AsyncFn} F
  * @param {F} asyncFn A function that returns a promise
@@ -284,16 +285,16 @@ export function useStore(createStore) {
 export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
   const cancelRef = useRef(() => {});
 
-  const [store, setStore] = useStore({
+  const [state, setState] = useStore({
     loading: false,
     value: undefined,
     error: undefined,
   });
 
+  // call the async function and track its evolution in the state
   const call = useMemoize(
     (...deps) =>
       async (...args) => {
-        // call the async function and track its evolution in the state
         // cancel last call so it cannot update the state during newer calls
         cancelRef.value();
 
@@ -302,19 +303,19 @@ export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
         cancelRef.value = () => (cancelled = true);
 
         try {
-          if (!cancelled) setStore({ loading: true });
+          if (!cancelled) setState({ loading: true });
           const value = await asyncFn(...args, ...deps);
-          if (!cancelled) setStore({ loading: false, error: undefined, value });
+          if (!cancelled) setState({ loading: false, error: undefined, value });
           return value;
         } catch (error) {
-          if (!cancelled) setStore({ loading: false, value: undefined, error });
+          if (!cancelled) setState({ loading: false, value: undefined, error });
         }
       },
     deps,
     isEqual
   );
 
-  return { ...store, call };
+  return { ...state, call };
 }
 
 /**
@@ -344,7 +345,7 @@ export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
 /**
  * Setup many attributes on a component.
  *
- * For these attributes to trigger update when they change, they should be added to the component `observedAttributes`.
+ * For these attributes to trigger an update when they change, they should be added to the component `observedAttributes`.
  *
  * The attributes default values passed as argument will be used to guess the kind of parsing/serialization needed to interact with the attribute in the DOM.
  *
@@ -480,7 +481,7 @@ export function useEvent(event, options) {
  * A callback to a lifecycle event.
  *
  * @template {any[]} D
- * @typedef {(element: HTMLElement, ...deps: D) => void} LifeCycleCallback
+ * @typedef {(element: HTMLElement, ...deps: D) => void | (() => void)} LifeCycleCallback
  */
 
 /**

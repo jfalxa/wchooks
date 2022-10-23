@@ -17,9 +17,9 @@ Note that there are some constraints on how you can use hooks, for more informat
 ## Usage
 
 This library being published on npm, you can:
+
 - `npm install wchooks` if you are using a bundler
 - import the module from a CDN, e.g. `import { useState } from "https://unpkg.com/wchooks"`
-
 
 ## Basic example
 
@@ -27,7 +27,7 @@ A counter with a button to increment its value:
 
 ```js
 import { html, render } from "lit-html";
-import { Component, useState, onRendered } from "wchooks";
+import { Hooked, useState, onRendered } from "wchooks";
 
 const Counter = () => {
   const [counter, setCounter] = useState(0);
@@ -44,24 +44,24 @@ const Counter = () => {
   `;
 };
 
-customElements.define("my-counter", Component(Counter, { render }));
+customElements.define("my-counter", Hooked(Counter, render));
 ```
 
-## Component factory
+## Hooked factory
 
-The `Component` factory is the function used to build a custom `HTMLElement` that can work with hooks.
+The `Hooked` factory is the function used to build a custom `HTMLElement` that can work with hooks.
 
-Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed in the options.
+Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed as second argument.
 
-If no `render` option is specified, `wchooks` will expect your renderers to return directly an `HTMLTemplateElement` and it will automatically put their content in the DOM, replacing the previous content if the template has changed.
+This `render` function applies the templates returned by your renderers to the DOM, this is e.g. `import { render } from "lit-html"`.
 
-The class returned by the `Component` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
+The class returned by the `Hooked` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
 
 ```typescript
-function Component<T>(
+function Hooked<T>(
   renderer: () => T,
-  render: (templateResult: T, root: HTMLElement) => void,
-  options?: ComponentOptions
+  render: (templateResult: T, root: ParentNode) => void,
+  options?: HookedOptions
 ): CustomElementConstructor;
 ```
 
@@ -69,14 +69,12 @@ function Component<T>(
 
 You also have a few other options to customize the behavior of your component:
 
-- `render`: This function applies the templates returned by your renderers to the DOM, this is e.g. `import { render } from "lit-html"`
 - `observedAttributes`: List of attributes that should trigger a rerender in your component when they change
 - `attachRoot`: Pick a rendering root different than the default open `shadowRoot`
 - `Element`: Specify another class than HTMLElement that your component should extend
 
 ```typescript
-interface ComponentOptions {
-  render?: (templateResult: T, root: HTMLElement) => void;
+interface HookedOptions {
   attachRoot?: (element: HTMLElement) => Element;
   Element?: typeof HTMLElement;
   observedAttributes?: string[];
@@ -90,30 +88,20 @@ interface ComponentOptions {
 1. [useRef](#useref)
 2. [useState](#usestate)
 3. [useReducer](#usereducer)
-4. [useMemoize](#usememoize)
-5. [useMemoizeFn](#usememoizefn)
+4. [useStore](#usestore)
+5. [useMemoize](#usememoize)
 6. [useAsync](#useasync)
 
 ### HTMLElement hooks
 
-7. [useAttribute](#useattribute)
-8. [useProperty](#useproperty)
-9. [useMethod](#usemethod)
-10. [useEvent](#useevent)
-11. [useEventListener](#useeventlistener)
-12. [useEventDelegation](#useeventlistener)
-13. [useStyle](#usestyle)
-14. [useTemplate](#usetemplate)
-15. [useQuerySelector](#usequeryselector)
-16. [useQuerySelectorAll](#usequeryselectorall)
-17. [useAssignedElements](#useassignedelements)
+7. [useAttributes](#useattributes)
+8. [useProperties](#useproperties)
+9. [useEvent](#useevent)
 
 ### Lifecycle hooks
 
-18. [onRendered](#onrendered)
-19. [onConnected](#onconnected)
-20. [onDisconnected](#ondisconnected)
-21. [onAdopted](#onadopted)
+10. [onUpdated](#onupdated)
+11. [onRendered](#onrendered)
 
 ## Data hooks
 
@@ -128,7 +116,7 @@ interface Ref<T> {
   value: T;
 }
 
-function useRef<T>(initialValue?: T): Ref<T>;
+function useRef<T>(initialValue: T): Ref<T>;
 ```
 
 ### useState
@@ -137,7 +125,7 @@ function useRef<T>(initialValue?: T): Ref<T>;
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
-Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useAttribute` and `useProperty`.
+Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useStore`, `useAttributes` and `useProperties`.
 
 ```typescript
 interface Setter<T> {
@@ -150,7 +138,11 @@ function useState<T>(initialState: T): [T, Setter<T>];
 
 ### useReducer
 
-Create a state managed by a reducer/dispatcher combo.
+Create a state managed by a reducer that returns the current value and a dispatch function to update it.
+
+When called, the dispatch function will run the reducer with the current state and the argument given to dispatch. The value returned by the reducer will be the new state.
+
+The passed `initialState` can be a function. In that case, it will receive 2 arguments `(dispatch, getState)`. This allows you to define methods inside your state that can read and write this same state.
 
 ```typescript
 interface Reducer<T, A> {
@@ -161,45 +153,36 @@ interface Dispatch<A> {
   (action: A): void;
 }
 
-function useReducer<T, A>(initialState: T, reducer: Reducer<T, A>): [T, Dispatch<A>];
+interface CreateState<T, A> {
+  (dispatch: Dispatch<A>, getState: () => T) => T
+}
+
+function useReducer<T, A>(createState: T | CreateState<T>, reducer: Reducer<T, A>): [T, Dispatch<A>];
 ```
 
 ### useMemoize
 
-[→ See the example](/examples/state.js)
+[→ See the example (1)](/examples/state.js)
+
+[→ See the example (2)](/examples/property.js)
 
 Only recreate the value when the deps change.
 
-The "deps" used in this hook and some other can be given in two forms:
+If no deps are specified, the value will be created only once and won't ever change.
 
-- as an array: each item in the array will be shallow compared to its previous version to find out if the deps have changed.
-- as a special object `{ deps, hasChanged: (deps, oldDeps) => boolean }`: The `hasChanged` function will be used to check if the deps are different
+The array of deps is otherwise spread as arguments of the callback function.
 
-Providing no deps will create the value only once in the whole life of the component.
+This allows you to define your callback function outside the scope of your component, hence allowing you to enforce a clear list of deps for this function.
 
-```typescript
-interface DepsOptions {
-  deps: any;
-  hasChanged: (deps: any, oldDeps: any) => boolean;
-}
-
-type Deps = any[] | DepsOptions;
-
-function useMemoize<T>(createValue: () => T, deps: Deps): T;
-```
-
-### useMemoizeFn
-
-[→ See the example](/examples/property.js)
-
-Only update the function scope when the deps change.
+You can also specify a custom `isEqual` function as last argument
+that will compare new props with old props in order to confirm that they have changed.
 
 ```typescript
-interface Fn {
-  (...args: any[]): any;
+interface IsEqual<D extends any[]> {
+  (deps: D | undefined, oldDeps: D | undefined) => boolean
 }
 
-function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
+function useMemoize<T, D extends any[]>(createValue: (...deps: D) => T, deps?: D, isEqual?: IsEqual<D>): T;
 ```
 
 ### useAsync
@@ -208,12 +191,12 @@ function useMemoizeFn<F extends Fn>(fn: F, deps: Deps): F;
 
 Creates a wrapper around an async function that allows tracking the evolution of the async operation while preventing racing conditions between consecutive calls.
 
-```typescript
-type PromiseType<P> = P extends Promise<infer T> ? T : never;
+If deps are given, the async function will be memoized using them and the optional isEqual argument. Those deps will then be spread as the last arguments of the async function when called.
 
+```typescript
 interface Async<F extends AsyncFn> {
   loading: boolean;
-  value: PromiseType<ReturnType<F>> | undefined;
+  value: PromiseType<F> | undefined; // PromiseType = type of the promise returned by the async function
   error: Error | undefined;
   call: F;
 }
@@ -222,57 +205,55 @@ interface AsyncFn {
   (...args: any[]): Promise<any>;
 }
 
-function useAsync<F extends AsyncFn>(asyncFn: F, deps?: Deps): Async<F>;
+function useAsync<F extends AsyncFn>(asyncFn: F, deps?: any[]): Async<F>;
 ```
 
 ## HTMLElement hooks
 
-### useAttribute
+### useAttributes
 
 [→ See the example](/examples/attribute.js)
 
-Bind the component rendering to the given attribute and return the current value of the attribute along with a function to update it.
+Bind many attributes to a component.
 
-For the component to keep track of changes in this attribute, you should specify it inside the `observedAttributes` option of the `Component` factory.
+For these attributes to trigger an update when they change, they should be added to the component `observedAttributes`.
 
-When given the `get` option, the attribute DOM string will be parsed with it when read.
+The attributes default values passed as argument will be used to guess the kind of parsing/serialization needed to interact with the attribute in the DOM.
 
-When given the `set` option, the attribute value will be stringified with it when written to the dom.
+For example, if we have `{ "my-flag": true }`, the attribute will be shown as `"my-flag"=""` in the DOM.
+If we have `{ "my-flag": false }`, the attribute will be removed.
+
+You can also customize the parsing/serialization by passing a function as default value. This function should return an object with 3 keys:
+
+- `defaultValue`: the initial value for this attribute
+- `get`: a function that parses the attribute DOM string into the wanted value
+- `set`: a function that serializes a value into a string to be written in the DOM
 
 ```typescript
-interface AttributeOptions<T> {
-  get?: (attribute: string) => T;
-  set?: (value: T) => string;
-}
+// The Attributes type flattens the list of default values to get the actual types that will be parsed from the DOM.
 
-function useAttribute<T>(name: string, options?: AttributeOptions<T>): [T, Setter<T>];
+function useAttributes<A extends { [name: string]: any }>(
+  initialAttributes: A
+): [Attributes<A>, (values: Attributes<Partial<A>>) => void];
 ```
 
-### useProperty
+### useProperties
 
-[→ See the example](/examples/property.js)
+[→ See the example (value)](/examples/property.js)
 
-Bind the component to the given property so it rerenders when it changes.
-Returns the current value of the property along with a setter.
+[→ See the example (method)](/examples/method.js)
 
-```typescript
-function useProperty<T>(name: string, defaultValue?: T): [T, Setter<T>];
-```
+Bind a list of properties to the current element.
 
-### useMethod
+The properties are initialized with the given default value.
+Then, any time they'll be modified, it will trigger an update.
 
-[→ See the example](/examples/method.js)
-
-Add a new method to the custom element object.
-It is useful if you want the dom element to expose an imperative API that has access to the private parts of the component like state and refs.
-
-If you do not provide a function as second argument, the hook will try to get the method with the same name already defined on the component. This is useful if you want some properties to be used like React callback props ([see the example](/examples/method.js))
-
-Deps can be specified if the function depends on the surrounding scope.
-If there are no deps, the method will only be bound once, during the element creation.
+These properties become accessible directly on the DOM element, wether they are values or functions. This allows you to build an API to control your component private state from the outside.
 
 ```typescript
-function useMethod<F extends Fn>(name: string, fn?: F, deps?: Deps): F;
+function useProperties<P extends { [name: string]: any }>(
+  properties: P
+): [P, (values: Partial<P>) => void];
 ```
 
 ### useEvent
@@ -288,177 +269,35 @@ interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }
 
-function useEvent<E extends keyof HTMLElementEventMap>(event: E, options?: EventInit): DispatchEvent<undefined>;
-
 function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent<T>;
 ```
 
-### useEventListener
-
-[→ See the example](/examples/event.js)
-
-Add an event listener bound to the current component that will attach and detach itself automatically, following the component lifecycle and deps change.
-
-```typescript
-function useEventListener<E extends keyof HTMLElementEventMap>(
-  event: E,
-  listener: (this: HTMLElement, event: HTMLElementEventMap[E]) => any,
-  deps?: Deps,
-  options?: boolean | AddEventListenerOptions
-): void;
-
-function useEventListener(
-  event: string,
-  listener: EventListenerOrEventListenerObject,
-  deps?: Deps,
-  options?: boolean | AddEventListenerOptions
-): void;
-```
-
-### useEventDelegation
-
-[→ See the example](/examples/template.js)
-
-Similar to [useEventListener](#useeventlistener) except the callback will only run when the actual event target matches the given selector.
-This allows you to define event listeners on elements that are nested inside the render root of your component.
-
-```typescript
-function useEventDelegation<E extends keyof HTMLElementEventMap>(
-  selector: string,
-  event: E,
-  listener: (this: HTMLElement, event: HTMLElementEventMap[E]) => any,
-  deps?: Deps,
-  options?: boolean | AddEventListenerOptions
-): void;
-
-function useEventDelegation(
-  selector: string,
-  event: string,
-  listener: EventListenerOrEventListenerObject,
-  deps?: Deps,
-  options?: boolean | AddEventListenerOptions
-): void;
-```
-
-### useStyle
-
-[→ See the example](/examples/style.js)
-
-Creates a style tag containing the given CSS and adds it to the component render root.
-
-Every time the given CSS string changes, this style tag content will also be updated.
-
-```typescript
-function useStyle(css: string): void;
-```
-
-### useTemplate
-
-[→ See the example](/examples/template.js)
-
-Creates a static template holding the given HTML.
-
-If you are not using a custom `render` function in your `Component` factory, in your renderer you can directly return the `HTMLTemplateElement` created by this hook and `wchooks` will automatically add the template content at the root of your component.
-
-This template is only created once and cannot be updated, so there is no point in updating the HTML string passed as argument.
-
-If you want to interact with the generated DOM, you must go through other hooks like [`useQuerySelector`](#usequeryselector) and [`useEventDelegation`](#useeventdelegation). Then when a state update occurs, you will have to imperatively update these DOM elements in the `onRendered` lifecycle hook, which can get quite verbose and hard to follow.
-
-For this reason it is recommended to use declarative libs like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/), they will offer you a way smoother development experience.
-
-```typescript
-function useTemplate(html: string): HTMLTemplateElement;
-```
-
-### useQuerySelector
-
-[→ See the example](/examples/template.js)
-
-Queries the component render root for the given selector and returns the first result in a ref.
-If no deps are passed, the query will be done on every render.
-
-```typescript
-function useQuerySelector<E extends Element>(selector: string, deps?: Deps): Ref<E | null>;
-```
-
-### useQuerySelectorAll
-
-Queries the component render root for the given selector and returns the list of results in a ref.
-If no deps are passed, the query will be done on every render.
-
-```typescript
-function useQuerySelectorAll<E extends Element>(selector: string, deps?: Deps): Ref<NodeListOf<E>>;
-```
-
-### useAssignedElements
-
-[→ See the example](/examples/slot.js)
-
-Queries the given slot for its assigned elements.
-
-If a selector is provided,
-
-If no slot name is provided, the default nameless slot will be used.
-
-
-```typescript
-interface Selection {
-  slot?: string;
-  selector?: string;
-}
-
-function useAssignedElements<E extends Element>(selection: Selection, deps?: Deps): Ref<E[]>;```
-
 ## Life cycle hooks
 
-For a full example of life cycle hooks, please consult the [lifecycle example script](/examples/lifecycle.js).
+[→ See the example](/examples/lifecycle.js)
 
-### onRendered
+### onUpdated
 
-The callback will be called right after an update (modification of state, property, attribute, etc) is rendered to the DOM.
+This hook will run a callback right **before** an update (modification of state, property, attribute, etc) is rendered to the DOM.
 
-Every time the deps change, it will be called again.
-
-Providing no deps will make the hook run the callback on every render.
+Every time the deps change, it will be called again. Providing no deps will make the hook run the callback on every render.
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
-```typescript
-interface LifeCycleCallbackWithClear {
-  (element: HTMLElement): void | (() => void);
-}
+When the `onUpdated` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
 
-function onRendered(callback: LifeCycleCallbackWithClear, deps?: Deps): void;
+For this reason, when your effect has too many dependencies, it is recommended to define your callback function outside the scope of the component, this will limit the amount of bugs coming from stale scope.
+
+```typescript
+type LifeCycleCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
+
+function onUpdated<D extends any[]>(updatedCallback: LifeCycleCallback<D>, deps?: D): void;
 ```
 
-## Life cycle hooks without clear method
+### onRendered
 
-These hooks are different than the previous one because they are directly bound to the native lifecycle of the custom element. Because of that, they have no deps and also do not give you a "clean up" feature so be careful when using them.
-
-### onConnected
-
-The callback will be called inside connectedCallback()
-
-You can use this hook to setup listeners or api calls that should only be done once when the component appears.
+This hook behaves exactly as `onUpdated` except it will run only **after** an update has been rendered to the DOM.
 
 ```typescript
-function onConnected(coonectedCallback: LifeCycleCallback): void;
-```
-
-### onDisconnected
-
-The callback will be called inside disconnectedCallback()
-
-Here you should imperatively clear any listener, timeout or other async operations setup in the `onConnected` hook.
-
-```typescript
-function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
-```
-
-### onAdopted
-
-The callback will be called inside adoptedCallback(), when the component changes of owner.
-
-```typescript
-function onDisconnected(disconnectedCallback: LifeCycleCallback): void;
+function onRendered<D extends any[]>(renderedCallback: LifeCycleCallback<D>, deps?: D): void;
 ```
