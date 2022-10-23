@@ -1,12 +1,12 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
-import { Hooked, onRendered, useRef } from "../wchooks.js";
+import { Hooked, onUpdated, useRef } from "../wchooks.js";
 
 function ExampleDOMRef() {
   // create a static reference to a dom element (or any other value)
   const inputRef = useRef();
 
-  onRendered(() => {
+  onUpdated(() => {
     window.inputRef = inputRef;
   }, []);
 

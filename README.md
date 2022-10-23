@@ -27,12 +27,12 @@ A counter with a button to increment its value:
 
 ```js
 import { html, render } from "lit-html";
-import { Hooked, useState, onRendered } from "wchooks";
+import { Hooked, useState, onUpdated } from "wchooks";
 
 const Counter = () => {
   const [counter, setCounter] = useState(0);
 
-  onRendered(() => {
+  onUpdated(() => {
     console.log("counter rendered:", counter);
   }, [counter]);
 
@@ -100,7 +100,6 @@ interface HookedOptions {
 ### Lifecycle hooks
 
 9. [onUpdated](#onupdated)
-10. [onRendered](#onrendered)
 
 ## Data hooks
 
@@ -136,6 +135,8 @@ function useState<T>(initialState: T): [T, Setter<T>];
 ```
 
 ### useReducer
+
+[→ See the example](/examples/reducer.js)
 
 Create a state managed by a reducer that returns the current value and a dispatch function to update it.
 
@@ -190,8 +191,6 @@ function useMemoize<T, D extends any[]>(createValue: (...deps: D) => T, deps?: D
 
 Creates a wrapper around an async function that allows tracking the evolution of the async operation while preventing racing conditions between consecutive calls.
 
-If deps are given, the async function will be memoized using them and the optional isEqual argument. Those deps will then be spread as the last arguments of the async function when called.
-
 ```typescript
 interface Async<F extends AsyncFn> {
   loading: boolean;
@@ -204,7 +203,7 @@ interface AsyncFn {
   (...args: any[]): Promise<any>;
 }
 
-function useAsync<F extends AsyncFn>(asyncFn: F, deps?: any[]): Async<F>;
+function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
 ```
 
 ## HTMLElement hooks
@@ -277,7 +276,7 @@ function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent
 
 ### onUpdated
 
-This hook will run a callback right **before** an update (modification of state, property, attribute, etc) is rendered to the DOM.
+This hook will run a callback right after an update (modification of state, property, attribute, etc) has been rendered to the DOM.
 
 Every time the deps change, it will be called again. Providing no deps will make the hook run the callback on every render.
 
@@ -285,18 +284,10 @@ In order to clear whatever was setup in the side effect, your callback should re
 
 When the `onUpdated` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
 
-For this reason, when your effect has too many dependencies, it is recommended to define your callback function outside the scope of the component, this will limit the amount of bugs coming from stale scope.
+For this reason, when your effect has too many dependencies, it is recommended to define your callback function outside the scope of the component, this will limit the amount of bugs coming from stale closure.
 
 ```typescript
 type LifeCycleCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
 
 function onUpdated<D extends any[]>(updatedCallback: LifeCycleCallback<D>, deps?: D): void;
-```
-
-### onRendered
-
-This hook behaves exactly as `onUpdated` except it will run only **after** an update has been rendered to the DOM.
-
-```typescript
-function onRendered<D extends any[]>(renderedCallback: LifeCycleCallback<D>, deps?: D): void;
 ```

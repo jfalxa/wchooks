@@ -1,27 +1,18 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useProperties, onRendered, useReducer, onUpdated } from "../wchooks.js";
+import { Hooked, useProperties, useReducer, onUpdated } from "../wchooks.js";
 
 function ExampleLifeCycle() {
   const [count, add] = useReducer(1, (count, increment) => count + increment);
 
   const [props] = useProperties({ onLifeCycle: undefined });
 
-  // add a callback to be run just before an update to count is rendered to the dom
+  // add a callback to be run just after the update to count has been rendered to the dom
   onUpdated(
     // [!] the current DOM element is _always_ passed as first argument
     // [!] notice that the dep array is spread as the last arguments of the lifecycle callback function
     (element, count) => {
       props.onLifeCycle(`onUpdated ${count}.`, element);
       return () => props.onLifeCycle(`onUpdated ${count}. (cleared)`, element);
-    },
-    [count]
-  );
-
-  // add a callback to be run just after the update to count has been rendered to the dom
-  onRendered(
-    (element, count) => {
-      props.onLifeCycle(`onRendered ${count}.`, element);
-      return () => props.onLifeCycle(`onRendered ${count}. (cleared)`, element);
     },
     [count]
   );
@@ -33,7 +24,7 @@ function ExampleLifeCycle() {
   return html`
     <fieldset>
       <legend>
-        <b>onUpdated / onRendered</b>
+        <b>onUpdated / onUpdated</b>
       </legend>
       <button id="update" @click=${() => add(1)}>Force update</button>
       <button id="remove" @click=${(e) => removeHostFromDocument(e.target)}>
@@ -55,14 +46,6 @@ function ExampleNestedLifeCycle() {
     (element, count) => {
       props.onLifeCycle(`onUpdated ${count}.`, element);
       return () => props.onLifeCycle(`onUpdated ${count}. (cleared)`, element);
-    },
-    [props.count]
-  );
-
-  onRendered(
-    (element, count) => {
-      props.onLifeCycle(`onRendered ${count}.`, element);
-      return () => props.onLifeCycle(`onRendered ${count}. (cleared)`, element);
     },
     [props.count]
   );

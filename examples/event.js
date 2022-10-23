@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useEvent, useState, onRendered } from "../wchooks.js";
+import { Hooked, useEvent, useState, onUpdated } from "../wchooks.js";
 
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);
@@ -8,7 +8,7 @@ function ExampleEvent() {
   const dispatchEvent = useEvent("myevent", { bubbles: true });
 
   // add a listener that reacts to the "custom-event" event
-  onRendered((element) => {
+  onUpdated((element) => {
     const increment = () => setCounter((counter) => counter + 1);
     element.addEventListener("myevent", increment);
     return () => element.removeEventListener("myevent", increment);

@@ -10,6 +10,7 @@ import "./method.js";
 import "./property.js";
 import "./ref.js";
 import "./state.js";
+import "./reducer.js";
 
 function ExampleApp() {
   function logLifeCycle(step, element) {
@@ -34,6 +35,7 @@ function ExampleApp() {
     <section style="display: flex; flex-direction: column; gap: 24px;">
       <example-dom-ref></example-dom-ref>
       <example-state></example-state>
+      <example-reducer></example-reducer>
       <example-async></example-async>
       <example-event></example-event>
       <example-attribute></example-attribute>
