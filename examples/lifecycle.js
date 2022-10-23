@@ -1,34 +1,30 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import {
-  onConnected,
-  onDisconnected,
-  onRendered,
-  Component,
-  useMethod,
-  useState,
-} from "../wchooks.mjs";
+import { Hooked, useProperties, onRendered, useReducer, onUpdated } from "../wchooks.mjs";
 
 function ExampleLifeCycle() {
-  const [_, update] = useState();
+  const [count, add] = useReducer(1, (count, increment) => count + increment);
 
-  // grab the onLifeCycle callback passed directly as property
-  const onLifeCycle = useMethod("onLifeCycle");
+  const [props] = useProperties({ onLifeCycle: undefined });
 
-  // add a callback to be run during connectedCallback
-  onConnected((element) => {
-    onLifeCycle("onConnected", element);
-  });
+  // add a callback to be run just before an update to count is rendered to the dom
+  onUpdated(
+    // [!] the current DOM element is _always_ passed as first argument
+    // [!] notice that the dep array is spread as the last arguments of the lifecycle callback function
+    (element, count) => {
+      props.onLifeCycle(`onUpdated ${count}.`, element);
+      return () => props.onLifeCycle(`onUpdated ${count}. (cleared)`, element);
+    },
+    [count]
+  );
 
-  // add a callback to be run when the element is removed
-  onDisconnected((element) => {
-    onLifeCycle("onDisconnected", element);
-  });
-
-  // add a callback to be run just after the update has been rendered to the dom
-  onRendered((element) => {
-    onLifeCycle("onRendered", element);
-    return () => onLifeCycle("onRendered (cleared)", element);
-  });
+  // add a callback to be run just after the update to count has been rendered to the dom
+  onRendered(
+    (element, count) => {
+      props.onLifeCycle(`onRendered ${count}.`, element);
+      return () => props.onLifeCycle(`onRendered ${count}. (cleared)`, element);
+    },
+    [count]
+  );
 
   function removeHostFromDocument(target) {
     target.getRootNode().host?.remove();
@@ -37,41 +33,39 @@ function ExampleLifeCycle() {
   return html`
     <fieldset>
       <legend>
-        <b>onConnected / onDisconnected / onAttributeChanged / onRendered</b>
+        <b>onUpdated / onRendered</b>
       </legend>
-      <button id="update" @click=${() => update()}>Update</button>
+      <button id="update" @click=${() => add(1)}>Force update</button>
       <button id="remove" @click=${(e) => removeHostFromDocument(e.target)}>
         Remove this block from document
       </button>
-      <span>→ check lifecycle callbacks in the dev-tools</span>
-      <example-nested-life-cycle .onLifeCycle=${onLifeCycle}></example-nested-life-cycle>
+      <span>→ check lifecycle callbacks in the console</span>
+      <example-nested-life-cycle
+        .count=${count}
+        .onLifeCycle=${props.onLifeCycle}
+      ></example-nested-life-cycle>
     </fieldset>
   `;
 }
 
-customElements.define(
-  "example-life-cycle",
-  Component(ExampleLifeCycle, { render, observedAttributes: ["value"] })
-);
-
 function ExampleNestedLifeCycle() {
-  const onLifeCycle = useMethod("onLifeCycle");
+  const [props] = useProperties({ count: 0, onLifeCycle: undefined });
 
-  // add a callback to be run during connectedCallback
-  onConnected((element) => {
-    onLifeCycle("onConnected", element);
-  });
+  onUpdated(
+    (element, count) => {
+      props.onLifeCycle(`onUpdated ${count}.`, element);
+      return () => props.onLifeCycle(`onUpdated ${count}. (cleared)`, element);
+    },
+    [props.count]
+  );
 
-  // add a callback to be run when the element is removed
-  onDisconnected((element) => {
-    onLifeCycle("onDisconnected", element);
-  });
-
-  // add a callback to be run just after the update has been rendered to the dom
-  onRendered((element) => {
-    onLifeCycle("onRendered", element);
-    return () => onLifeCycle("onRendered (cleared)", element);
-  });
+  onRendered(
+    (element, count) => {
+      props.onLifeCycle(`onRendered ${count}.`, element);
+      return () => props.onLifeCycle(`onRendered ${count}. (cleared)`, element);
+    },
+    [props.count]
+  );
 
   function removeHostFromDocument(target) {
     target.getRootNode().host?.remove();
@@ -88,7 +82,5 @@ function ExampleNestedLifeCycle() {
   `;
 }
 
-customElements.define(
-  "example-nested-life-cycle",
-  Component(ExampleNestedLifeCycle, { render, observedAttributes: ["value"] })
-);
+customElements.define("example-life-cycle", Hooked(ExampleLifeCycle, render));
+customElements.define("example-nested-life-cycle", Hooked(ExampleNestedLifeCycle, render));

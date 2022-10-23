@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useAsync } from "../wchooks.mjs";
+import { Hooked, useAsync } from "../wchooks.mjs";
 
 async function fetchData({ delay, shouldThrow }) {
   // fake waiting the specified delay before resolving
@@ -32,4 +32,4 @@ function ExampleAsync() {
   `;
 }
 
-customElements.define("example-async", Component(ExampleAsync, { render }));
+customElements.define("example-async", Hooked(ExampleAsync, render));

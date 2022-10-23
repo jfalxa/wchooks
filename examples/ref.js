@@ -1,14 +1,14 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
-import { Component, onConnected, useRef } from "../wchooks.mjs";
+import { Hooked, onRendered, useRef } from "../wchooks.mjs";
 
 function ExampleDOMRef() {
   // create a static reference to a dom element (or any other value)
   const inputRef = useRef();
 
-  onConnected(() => {
+  onRendered(() => {
     window.inputRef = inputRef;
-  });
+  }, []);
 
   return html`
     <fieldset>
@@ -19,4 +19,4 @@ function ExampleDOMRef() {
   `;
 }
 
-customElements.define("example-dom-ref", Component(ExampleDOMRef, { render }));
+customElements.define("example-dom-ref", Hooked(ExampleDOMRef, render));

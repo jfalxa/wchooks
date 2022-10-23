@@ -1,6 +1,7 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
-import { Component, useMethod, useRef, useState, onConnected } from "../wchooks.mjs";
+import { useEvent } from "../wchooks.mjs";
+import { Hooked, useRef, useState, useProperties, onRendered } from "../wchooks.mjs";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();
@@ -18,47 +19,44 @@ function ExampleMethodContainer() {
         Toggle checkbox from outside <i id="checked">(checked=${active})</i>
       </button>
       <span>→ try <code>window.exampleMethod.toggleCheckbox()</code> in the console</span>
-      <example-method ${ref(methodRef)} .onChange=${(active) => setActive(active)}></example-method>
+      <example-method ${ref(methodRef)} @change=${(e) => setActive(e.detail)}></example-method>
     </fieldset>
   `;
 }
 
-customElements.define("example-method-container", Component(ExampleMethodContainer, { render }));
-
 function ExampleMethod() {
   const [active, setActive] = useState(false);
+  const dispatchChange = useEvent("change");
 
-  // grab the .onChange property added to this element by its parent
-  const onChange = useMethod("onChange");
-
-  // the method is bound to the element under the specified name
-  // and it is also returned so we can access it in the rendering scope
-  const toggleCheckbox = useMethod(
-    "toggleCheckbox",
-    (forceActive) => {
-      const newActive = forceActive ?? !active;
-      setActive(newActive);
-      onChange?.(newActive);
+  const [props] = useProperties({
+    // the method is bound to the element under the specified name
+    // and it is also returned here so we can access it in the rendering scope
+    toggleCheckbox(forceActive) {
+      setActive((active) => {
+        const _active = forceActive ?? !active;
+        dispatchChange({ detail: _active });
+        return _active;
+      });
     },
-    [active]
-  );
-
-  onConnected((element) => {
-    window.exampleMethod = element;
   });
+
+  onRendered((element) => {
+    window.exampleMethod = element;
+  }, []);
 
   return html`
     <fieldset style="margin-top: 8px">
       <legend>child component with exposed method</legend>
-      <button @click=${() => toggleCheckbox()}>Toggle checkbox</button>
+      <button @click=${() => props.toggleCheckbox()}>Toggle checkbox</button>
       <input
         type="checkbox"
         .checked=${active}
-        @change=${(e) => toggleCheckbox(e.target.checked)}
+        @change=${(e) => props.toggleCheckbox(e.target.checked)}
       />
       <span id="toggle">${active ? "ON" : "OFF"}</span>
     </fieldset>
   `;
 }
 
-customElements.define("example-method", Component(ExampleMethod, { render }));
+customElements.define("example-method", Hooked(ExampleMethod, render));
+customElements.define("example-method-container", Hooked(ExampleMethodContainer, render));

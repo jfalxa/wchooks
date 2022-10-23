@@ -1,14 +1,18 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Component, useEvent, useEventListener, useState } from "../wchooks.mjs";
+import { Hooked, useEvent, useState, onRendered } from "../wchooks.mjs";
 
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);
 
   // create a function that dispatches the "custom-event" event
-  const dispatchEvent = useEvent("custom-event", { bubbles: true });
+  const dispatchEvent = useEvent("myevent", { bubbles: true });
 
   // add a listener that reacts to the "custom-event" event
-  useEventListener("custom-event", () => setCounter((counter) => counter + 1), []);
+  onRendered((element) => {
+    const increment = () => setCounter((counter) => counter + 1);
+    element.addEventListener("myevent", increment);
+    return () => element.removeEventListener("myevent", increment);
+  }, []);
 
   return html`
     <fieldset>
@@ -23,4 +27,4 @@ function ExampleEvent() {
   `;
 }
 
-customElements.define("example-event", Component(ExampleEvent, { render }));
+customElements.define("example-event", Hooked(ExampleEvent, render));
