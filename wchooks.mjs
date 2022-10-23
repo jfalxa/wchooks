@@ -1,30 +1,42 @@
 const Hooks = createHookContext();
 
-export function Component(renderer, options = {}) {
+/**
+ * @typedef {{
+ *  Element?: typeof HTMLElement,
+ *  observedAttributes?: string[],
+ *  attachRoot?: (element: HTMLElement) => ParentNode
+ * }} HookedOptions
+ */
+
+/**
+ * @template T
+ * @param {() => T} renderer
+ * @param {(template: T, root: ParentNode) => void} render
+ * @param {HookedOptions=} options
+ * @returns {CustomElementConstructor}
+ */
+export function Hooked(renderer, render, options = {}) {
   return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
     renderRoot;
 
-    _hooks = [];
-    _updateRequested = false;
+    hooks = [];
+    hookIndex = -1;
+    updateRequested = false;
+    rendered = Promise.resolve(true);
 
     constructor() {
       super();
       this.renderRoot = options.attachRoot?.(this) ?? this.attachShadow({ mode: "open" });
-      this.resetRendered(); // setup a promise that resolves only once all pending updates have been applied
     }
 
     connectedCallback() {
-      this.requestUpdate(); // schedule an update for after this whole callback is done running
-      this.callRenderer(); // dry run the renderer so we can register the component's hooks
-      this.appendStyles(); // create the required style tag as soon as the component is created
-      this.runLifeCycleCallbacks("connected", this);
+      this.requestUpdate();
     }
 
     adoptedCallback() {
       this.requestUpdate();
-      this.runLifeCycleCallbacks("adopted", this);
     }
 
     attributeChangedCallback() {
@@ -32,267 +44,326 @@ export function Component(renderer, options = {}) {
     }
 
     disconnectedCallback() {
-      this.runLifeCycleCallbacks("disconnected", this);
+      this.clearLifeCycleCallbacks("updated");
       this.clearLifeCycleCallbacks("rendered");
     }
 
     getHook = (index) => {
-      return this._hooks[index].data;
+      return this.hooks[index].data;
     };
 
     setHook = (index, data) => {
-      this._hooks[index].data = data;
+      this.hooks[index].data = data;
     };
 
-    registerHook = (index, type, createData) => {
-      // only update the hook if it was non-existent
-      if (this._hooks[index] === undefined) {
-        this._hooks[index] = { type, data: createData() };
-      }
-      return this.getHook(index);
+    registerHook = (type, createData = () => {}) => {
+      const index = ++this.hookIndex;
+      // only initialize the hook if it doesn't exist yet
+      if (this.hooks[index] === undefined) this.hooks[index] = { type, data: createData() };
+      return index;
     };
 
-    forEachHook = (type, callback) => {
-      for (const hook of this._hooks) {
-        if (hook.type === type) callback(hook.data);
-      }
-    };
-
-    runLifeCycleCallbacks = (step, ...args) => {
-      this.forEachHook("lifecycle", (data) => {
-        if (data.step === step) data.callback?.(...args);
-      });
+    runLifeCycleCallbacks = (step) => {
+      this.hooks
+        .filter((hook) => hook.type === "lifecycle" && hook.data.step === step)
+        .forEach((hook) => hook.data.callback?.(this));
     };
 
     clearLifeCycleCallbacks = (step) => {
-      this.forEachHook("lifecycle", (data) => {
-        if (data.step === step) data.clearSideEffect?.();
+      this.hooks
+        .filter((hook) => hook.type === "lifecycle" && hook.data.step === step)
+        .forEach((hook) => hook.data.clearCallback?.());
+    };
+
+    resolveRendered = () => {};
+
+    resetRendered = () => {
+      this.rendered = new Promise((resolve) => {
+        this.resolveRendered = () => resolve(true);
       });
     };
 
-    appendStyles = () => {
-      this.forEachHook("style", (style) => this.renderRoot.append(style));
-    };
-
-    resetRendered = () => {
-      this.rendered = new Promise((resolve) => (this.resolveRendered = resolve));
-    };
-
     requestUpdate = async () => {
-      if (!this._updateRequested) {
-        this.resetRendered(); // prepare the promise that will resolve once all updates are done
-        this._updateRequested = true;
-        await Promise.resolve(); // defer the execution of the function starting from here
-        this._updateRequested = false;
-        this.update(); // that way update() will be called only after all other sync operations are done
-        this.resolveRendered();
+      if (!this.updateRequested) {
+        this.resetRendered(); // prepare the promise that will resolve once all sync updates are done and rendered
+        this.updateRequested = true;
+        await Promise.resolve(); // from this point, defer the execution of the rest of the function
+        this.updateRequested = false;
+        this.render(); // that way render() will be called only once, after all other sync updates are done
+        this.resolveRendered?.();
       }
     };
 
-    update = async () => {
-      this.render();
-      this.runLifeCycleCallbacks("rendered", this);
-    };
-
-    callRenderer = () => {
-      Hooks.setContext(this);
-      return renderer();
-    };
-
     render = () => {
-      const templateResult = this.callRenderer();
-      const _render = options.render ?? render;
-      return _render(templateResult, this.renderRoot);
+      Hooks.setContext(this);
+      this.hookIndex = -1; // reset the hook index before registering hooks again
+      const templateResult = renderer();
+      this.runLifeCycleCallbacks("updated");
+      render(templateResult, this.renderRoot);
+      this.runLifeCycleCallbacks("rendered");
     };
   };
 }
 
+/**
+ * @template T
+ * @param {T} initialValue
+ * @returns {{ value: T }}
+ */
 export function useRef(initialValue) {
-  const [index, element] = Hooks.getContext();
-  return element.registerHook(index, "ref", () => ({ value: initialValue }));
+  const element = Hooks.getContext();
+  const index = element.registerHook("ref", () => ({ value: initialValue }));
+  return element.getHook(index);
 }
 
-export function useMemoize(createValue, deps = []) {
-  const [index, element] = Hooks.getContext();
-  const previous = element.registerHook(index, "memoize", () => ({ value: createValue() }));
+/**
+ * @template T
+ * @template {any[]} D
+ * @param {(...deps: D) => T} createValue
+ * @param {D} deps
+ * @param {IsEqual<D>} isEqual
+ * @returns {T}
+ */
+export function useMemoize(createValue, deps, isEqual = isShallowEqual) {
+  const element = Hooks.getContext();
+  const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
+  const previous = element.getHook(index);
 
-  if (hasChangedDeps(deps, previous.deps)) {
-    element.setHook(index, { value: createValue(), deps });
+  // update hook value when deps change, and only once if no deps are provided
+  if (!isEqual(deps ?? [], previous.deps ?? [])) {
+    element.setHook(index, { deps, value: createValue(...deps) });
   }
 
-  // register hook and extrat the actual value from current hook cache
+  // extrat the actual value from current hook cache
   return element.getHook(index).value;
 }
 
-export function useMemoizeFn(fn, deps = []) {
-  return useMemoize(() => fn, deps);
-}
+/**
+ * @template A
+ * @typedef {(action: A) => void} Dispatch
+ */
 
-export function useAsync(asyncFn, deps) {
-  const cancelPrevious = useRef();
+/**
+ * @template T
+ * @template A
+ * @typedef {(dispatch: Dispatch<A>, getState: () => T) => T} StateInit
+ */
 
-  const [state, commit] = useReducer(
-    { loading: false, value: undefined, error: undefined },
-    (oldState, newState) => ({ ...oldState, ...newState })
-  );
-
-  const callAsyncFn = useMemoizeFn(async (...args) => {
-    let cancelled = false;
-    cancelPrevious.value?.(); // cancel previous call so it cannot update the state later
-    cancelPrevious.value = () => (cancelled = true); // prepare the cancel function for the current call
-
-    try {
-      if (!cancelled) commit({ loading: true });
-      const value = await asyncFn(...args);
-      if (!cancelled) commit({ loading: false, error: undefined, value });
-      return value;
-    } catch (error) {
-      if (!cancelled) commit({ loading: false, value: undefined, error });
-    }
-  }, deps);
-
-  return { ...state, call: callAsyncFn };
-}
-
-export function useState(initialState) {
-  return useReducer(initialState, (oldState, state) => resolveData(state, oldState));
-}
-
+/**
+ * @template T
+ * @template A
+ * @param {T | StateInit<T, A>} initialState
+ * @param {(state: T, action: A) => void} reducer
+ * @returns {[T, Dispatch<A>]}
+ */
 export function useReducer(initialState, reducer) {
-  const [index, element] = Hooks.getContext();
+  const element = Hooks.getContext();
 
-  return element.registerHook(index, "reducer", () => [
-    initialState,
-    (action) => {
-      const [oldState, _dispatch] = element.getHook(index);
-      const state = reducer(oldState, action);
-      element.setHook(index, [state, _dispatch]);
-      element.requestUpdate();
-    },
-  ]);
-}
-
-export function useAttribute(name, { get = (v) => v, set = String } = {}) {
-  const [index, element] = Hooks.getContext();
-
-  const attribute = get(element.getAttribute(name));
-
-  const setAttribute = element.registerHook(index, "attribute", () => {
-    return function setAttribute(attribute) {
-      const oldValue = get(element.getAttribute(name));
-      const nextValue = resolveData(attribute, oldValue);
-      element.setAttribute(name, set(nextValue));
-    };
-  });
-
-  return [attribute, setAttribute];
-}
-
-export function useProperty(name, initialValue) {
-  const [index, element] = Hooks.getContext();
-
-  // as soon as the component is created, setup a proxy to the property to allow tracking its updates
-  onConnected((element) => observeProperty(element, name, initialValue));
-
-  const setProperty = element.registerHook(index, "property", () => {
-    // initialize the property during registration
-    element[name] = element[name] ?? initialValue;
-
-    return function setProperty(value) {
-      const oldValue = element[name];
-      const nextValue = resolveData(value, oldValue);
-      element[name] = nextValue;
-    };
-  });
-
-  return [element[name], setProperty];
-}
-
-export function useMethod(name, method, deps) {
-  const [index, element] = Hooks.getContext();
-
-  // as soon as the component is created, add the method to the element
-  // if no method function is provided, we get the method with the same name already defined in the element
-  const previousDeps = element.registerHook(index, "method", () => {
-    element[name] = method ?? element[name];
-    return null;
-  });
-
-  // then update the method only if the deps change
-  if (hasChangedDeps(deps, previousDeps)) {
-    element[name] = method ?? element[name];
-    element.setHook(index, deps);
-  }
-
-  // directly return the method registered on the element
-  return element[name];
-}
-
-export function useQuerySelector(selector, deps) {
-  const ref = useRef();
-
-  // udpate the ref with a new query result every time the deps change
-  onRendered((element) => {
-    ref.value = element.renderRoot.querySelector(selector);
-  }, deps);
-
-  return ref;
-}
-
-export function useQuerySelectorAll(selector, deps) {
-  const ref = useRef();
-
-  // udpate the ref with a new query result every time the deps change
-  onRendered((element) => {
-    ref.value = element.renderRoot.querySelectorAll(selector);
-  }, deps);
-
-  return ref;
-}
-
-export function useAssignedElements({ slot, selector }, deps) {
-  const ref = useRef([]);
-
-  // udpate the ref with a new query result every time the deps change
-  onRendered((element) => {
-    const slotSelector = slot ? `slot[name="${slot}"]` : "slot:not([name])";
-    const slotElement = element.renderRoot.querySelector(slotSelector);
-
-    ref.value = slotElement.assignedElements({ flatten: true });
-
-    if (selector) {
-      ref.value = ref.value
-        .flatMap((el) => [el.matches(selector) ? el : null, ...el.querySelectorAll(selector)])
-        .filter(Boolean);
+  const index = element.registerHook("reducer", () => {
+    function getState() {
+      return element.getHook(index)[0];
     }
-  }, deps);
 
-  return ref;
-}
+    function dispatch(state) {
+      const oldState = getState();
+      const newState = reducer(oldState, state);
+      element.setHook(index, [newState, dispatch]);
+      element.requestUpdate();
+    }
 
-export function useTemplate(html) {
-  // create the template only once with the given HTML
-  return useMemoize(() => {
-    const template = document.createElement("template");
-    template.innerHTML = html;
-    return template;
+    return [resolve(initialState, dispatch, getState), dispatch];
   });
+
+  return element.getHook(index);
 }
 
-export function useStyle(css) {
-  const [index, element] = Hooks.getContext();
-  const style = element.registerHook(index, "style", () => document.createElement("style"));
+/**
+ * @template T
+ * @typedef {T | ((value: T) => T)} SetState
+ */
 
-  // update the style tag content when the CSS changes
-  onRendered(() => {
-    style.textContent = css;
-  }, [css]);
+/**
+ * @template T
+ * @param {T | (() => T)} createState
+ * @returns {[T, Dispatch<SetState<T>>]}
+ */
+export function useState(createState) {
+  return useReducer(resolve(createState), (oldState, newState) => resolve(newState, oldState));
 }
 
+/**
+ * @template T
+ * @param {T | StateInit<T, SetState<Partial<T>>>} createStore
+ * @returns {[T, Dispatch<SetState<Partial<T>>>]}
+ */
+export function useStore(createStore) {
+  return useReducer(createStore, (state, partial) => ({ ...state, ...resolve(partial, state) }));
+}
+
+/**
+ * @typedef {(...args: any[]) => Promise<any>} AsyncFn
+ */
+
+/**
+ * @template {AsyncFn} F
+ * @typedef {F extends (...args: any[]) => Promise<infer T> ? T : never} PromiseType
+ */
+
+/**
+ * @template {AsyncFn} F
+ * @typedef  {{
+ *  loading: boolean,
+ *  value: PromiseType<F> | undefined,
+ *  error: Error | undefined,
+ *  cancel: () => void,
+ *  call: F
+ * }} Async
+ */
+
+/**
+ * @template {AsyncFn} F
+ * @param {F} asyncFn
+ * @returns {Async<F>}
+ */
+export function useAsync(asyncFn) {
+  const createAsyncStore = (setState, getState) => ({
+    // state to track the evolution of the async operation
+    loading: false,
+    value: undefined,
+    error: undefined,
+
+    // calling this method will cancel the last call of the async method
+    cancel() {},
+
+    // call the async function and track its evolution in the state
+    async call(...args) {
+      // cancel last call so it cannot update the state during newer calls
+      getState().cancel();
+
+      // prepare the function to cancel this call
+      let cancelled = false;
+      const cancel = () => (cancelled = true);
+
+      try {
+        if (!cancelled) setState({ loading: true, cancel });
+        const value = await asyncFn(...args);
+        if (!cancelled) setState({ loading: false, error: undefined, value });
+        return value;
+      } catch (error) {
+        if (!cancelled) setState({ loading: false, value: undefined, error });
+      }
+    },
+  });
+
+  return useStore(createAsyncStore)[0];
+}
+
+/**
+ * @template {{ [name: string]: any }} A
+ * @typedef {{ [name in keyof A]: A[name] }} Attributes
+ */
+
+/**
+ * @template {{ [name: string]: any }} A
+ * @param {Attributes<A>} attributes
+ * @returns {[Attributes<A>, (values: Partial<Attributes<A>>) => void]}
+ */
+export function useAttributes(attributes) {
+  const element = Hooks.getContext();
+  const attrNames = Object.keys(attributes);
+
+  const index = element.registerHook("attributes", () => {
+    function getAttributes() {
+      return Object.fromEntries(
+        attrNames.map((name) => [name, getAttribute(element, name, attributes[name])])
+      );
+    }
+
+    // create a function that can update many attributes at once
+    function setAttributes(values) {
+      const _values = resolve(values, getAttributes());
+      Object.keys(_values).forEach((name) => {
+        if (name in attributes) {
+          setAttribute(element, name, attributes[name], _values[name]);
+        }
+      });
+    }
+
+    return [getAttributes, setAttributes];
+  });
+
+  // initialize unspecified attributes with default values
+  onUpdated(() => {
+    attrNames
+      .filter((name) => !element.hasAttribute(name))
+      .forEach((name) => setAttribute(element, name, attributes[name], attributes[name])); // prettier-ignore
+  }, []);
+
+  // recompute the list of attributes on every render
+  const [getAttributes, setAttributes] = element.getHook(index);
+  return [getAttributes(), setAttributes];
+}
+
+/**
+ * @template {{ [name: string]: any }} P
+ * @typedef {{ [name in keyof P]: P[name] }} Properties
+ */
+
+/**
+ * @template {{ [name: string]: any }} P
+ * @param {Properties<P>} properties
+ * @returns {[Properties<P>, (values: Partial<Properties<P>>) => void]}
+ */
+export function useProperties(properties) {
+  const element = Hooks.getContext();
+  const propNames = Object.keys(properties);
+
+  const index = element.registerHook("properties", () => {
+    // build a list of properties based of their value inside the element
+    function getProperties() {
+      return Object.fromEntries(
+        propNames.map((name) => [name, name in element ? element[name] : properties[name]])
+      );
+    }
+
+    // create a function that can update many properties at once
+    function setProperties(values) {
+      const _values = resolve(values, getProperties());
+      Object.keys(_values).forEach((name) => {
+        if (name in properties) {
+          element[name] = _values[name];
+        }
+      });
+    }
+
+    return [getProperties, setProperties];
+  });
+
+  // on first update, start observing listed properties and initialize the unspecified ones with default values
+  onUpdated(() => {
+    propNames.forEach((name) => observeProperty(element, name, properties[name]));
+  }, []);
+
+  // recompute the list of properties every time the component is rendered
+  const [getProperties, setProperties] = element.getHook(index);
+  return [getProperties(), setProperties];
+}
+
+/**
+ * @template T
+ * @typedef {(options?: CustomEventInit<T>) => CustomEvent<T>} DispatchEvent
+ */
+
+/**
+ * @template T
+ * @param {string} event
+ * @param {CustomEventInit<T>=} options
+ * @returns {DispatchEvent<T>}
+ */
 export function useEvent(event, options) {
-  const [index, element] = Hooks.getContext();
+  const element = Hooks.getContext();
 
-  return element.registerHook(index, "event", () => {
+  const index = element.registerHook("event", () => {
     // create a function that dispatches the event configured by this hook
     return function dispatchEvent(eventOptions) {
       const _event = new CustomEvent(event, { ...options, ...eventOptions });
@@ -300,85 +371,54 @@ export function useEvent(event, options) {
       return _event;
     };
   });
+
+  return element.getHook(index);
 }
 
-export function useEventListener(event, callback, deps, options) {
-  // add and remove event listener when the deps change
-  onRendered((element) => {
-    element.addEventListener(event, callback, options);
-    return () => element.removeEventListener(event, callback, options);
-  }, deps);
+/**
+ * @template {any[]} D
+ * @typedef {(element: HTMLElement, ...deps: D) => void} LifeCycleCallback
+ */
+
+/**
+ * @template {any[]} D
+ * @param {LifeCycleCallback<D>} updatedCallback
+ * @param {D=} deps
+ * @param {IsEqual<D>=} isEqual
+ * @returns {void}
+ */
+export function onUpdated(updatedCallback, deps, isEqual) {
+  useLifeCycleWithDeps("updated", updatedCallback, deps, isEqual);
 }
 
-export function useEventDelegation(selector, event, callback, deps, options) {
-  onRendered((element) => {
-    // run the callback only if the target matches the selector
-    const _callback = (e) => e.target.closest?.(selector) && callback(e);
-
-    element.renderRoot.addEventListener(event, _callback, options);
-    return () => element.renderRoot.removeEventListener(event, _callback, options);
-  }, deps);
+/**
+ * @template {any[]} D
+ * @param {LifeCycleCallback<D>} renderedCallback
+ * @param {D=} deps
+ * @param {IsEqual<D>=} isEqual
+ * @returns {void}
+ */
+export function onRendered(renderedCallback, deps, isEqual) {
+  useLifeCycleWithDeps("rendered", renderedCallback, deps, isEqual);
 }
 
-function useLifeCycle(step, callback) {
-  const [index, element] = Hooks.getContext();
-  element.registerHook(index, "lifecycle", () => ({ step, callback }));
-  element.setHook(index, { step, callback }); // update the callback function on every render
-}
+function useLifeCycleWithDeps(step, stepCallback, deps, isEqual = isShallowEqual) {
+  const element = Hooks.getContext();
 
-export function onConnected(connectedCallback) {
-  useLifeCycle("connected", connectedCallback);
-}
+  const index = element.registerHook("lifecycle", () => ({ step }));
+  const previous = element.getHook(index);
 
-export function onDisconnected(disconnectedCallback) {
-  useLifeCycle("disconnected", disconnectedCallback);
-}
-
-export function onAdopted(adoptedCallback) {
-  useLifeCycle("adopted", adoptedCallback);
-}
-
-export function onRendered(sideEffect, deps) {
-  const [index, element] = Hooks.getContext();
-  const previous = element.registerHook(index, "lifecycle", () => ({}));
-
-  const step = "rendered";
-
-  function callback(...args) {
-    // rerun side effect if at least one dep has changed
-    if (hasChangedDeps(deps, previous.deps)) {
-      previous.clearSideEffect?.();
-      const clearSideEffect = sideEffect(...args);
-      element.setHook(index, { step, callback, clearSideEffect, deps });
+  // rerun side effect only if deps have changed
+  function callback() {
+    if (!isEqual(deps, previous.deps)) {
+      previous.clearCallback?.();
+      const clearCallback = stepCallback(element, ...(deps ?? []));
+      element.setHook(index, { step, callback, clearCallback, deps });
     }
   }
 
+  // update the callback function on every render so it's fresh when it's called
   element.setHook(index, { step, callback, deps: previous.deps });
-}
-
-function createHookContext() {
-  let index = 0;
-  let element = undefined;
-
-  return {
-    context: element,
-    getContext: () => [
-      index++, //
-      element,
-    ],
-    setContext: (el) => {
-      index = 0;
-      element = el;
-    },
-  };
-}
-
-function render(template, root) {
-  // only rerender if the template has changed
-  if (root._template !== template) {
-    root._template = template;
-    root.append(template.content.cloneNode(true));
-  }
 }
 
 function observeProperty(element, property, defaultValue) {
@@ -393,19 +433,79 @@ function observeProperty(element, property, defaultValue) {
       return element[_property];
     },
     set(value) {
-      element[_property] = value;
-      element.requestUpdate();
+      if (element[_property] !== value) {
+        element[_property] = value;
+        element.requestUpdate();
+      }
     },
   });
 }
 
-function hasChangedDeps(deps = null, oldDeps = null) {
-  if (deps === null || oldDeps === null) return true;
-  if (Array.isArray(deps) && Array.isArray(oldDeps)) return deps.some((dep, i) => oldDeps[i] !== dep); // prettier-ignore
-  if (deps.hasChanged && oldDeps.deps) return deps.hasChanged(deps.deps, oldDeps.deps);
-  return true;
+function getAttribute(element, name, defaultValue) {
+  const type = typeof defaultValue;
+  const attribute = element.getAttribute(name);
+  if (type === "boolean") return attribute === "";
+  if (attribute === null) return defaultValue;
+  if (type === "string") return attribute;
+  if (type === "number") return parseInt(attribute, 10);
+  if (type === "function") return defaultValue().get(attribute);
+  else return JSON.parse(attribute);
 }
 
-function resolveData(data, oldData) {
-  return typeof data === "function" ? data(oldData) : data;
+function setAttribute(element, name, defaultValue, value) {
+  const type = typeof defaultValue;
+
+  if (type === "function") {
+    const builder = defaultValue();
+    const _value = value === defaultValue ? builder.defaultValue : value;
+    return element.setAttribute(name, builder.set(_value));
+  }
+
+  if (type === "boolean") {
+    if (value) return element.setAttribute(name, "");
+    else return element.removeAttribute(name);
+  }
+
+  let attribute = "";
+  if (type === "string") attribute = value;
+  else if (type === "number") attribute = value.toString();
+  else attribute = JSON.stringify(value);
+
+  return element.setAttribute(name, attribute);
+}
+
+function createHookContext() {
+  let _element = undefined;
+  return {
+    getContext: () => _element,
+    setContext: (element) => (_element = element),
+  };
+}
+
+/**
+ * @template {any[]} D
+ * @typedef {typeof isShallowEqual} IsEqual
+ */
+
+/**
+ * @template {any[]} D
+ * @param {D=} deps
+ * @param {D=} oldDeps
+ * @returns {boolean}
+ */
+function isShallowEqual(deps, oldDeps) {
+  if (deps === undefined || oldDeps === undefined) return false;
+  if (deps.length !== oldDeps.length) return false;
+  else return deps.every((_, i) => deps[i] === oldDeps[i]);
+}
+
+/**
+ * @template T
+ * @template {any[]} A
+ * @param {T | ((...args: A) => T)} data
+ * @param  {A} oldData
+ * @returns {T}
+ */
+function resolve(data, ...oldData) {
+  return typeof data === "function" ? data(...oldData) : data;
 }
