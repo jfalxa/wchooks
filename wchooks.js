@@ -208,7 +208,7 @@ export function useState(createState) {
  * hence allowing you to enforce a clear list of deps for this function.
  *
  * You can also specify a custom `isEqual` function as last argument
- * that will compare new props with old props in order to confirm that they have changed.
+ * that will compare new deps with old deps in order to confirm that they have changed.
  *
  * @template T
  * @template {any[]} D
@@ -345,7 +345,7 @@ export function useAsync(asyncFn) {
  *
  * @template {{ [name: string]: any }} A
  * @param {A} attributes A list of default values for some attributes
- * @returns {[Attributes<A>, (values: Attributes<Partial<A>>) => void]} A couple with the current attributes value and a function to update them
+ * @returns {[Attributes<A>, (values: Partial<Attributes<A>) => void]} A couple with the current attributes value and a function to update them
  */
 export function useAttributes(attributes) {
   const element = Hooks.getContext();
@@ -478,7 +478,7 @@ export function useEvent(event, options) {
  * hence allowing you to enforce a clear list of deps for this function.
  *
  * You can also specify a custom `isEqual` function as last argument
- * that will compare new props with old props in order to confirm that they have changed.
+ * that will compare new deps with old deps in order to confirm that they have changed.
  *
  * @template {any[]} D
  * @param {LifeCycleCallback<D>} updatedCallback A callback to be run after an update
