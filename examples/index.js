@@ -32,15 +32,13 @@ function ExampleApp() {
     </p>
 
     <section style="display: flex; flex-direction: column; gap: 24px;">
+      <example-dom-ref></example-dom-ref>
       <example-state></example-state>
+      <example-async></example-async>
       <example-event></example-event>
       <example-attribute></example-attribute>
       <example-property></example-property>
-      <example-dom-ref></example-dom-ref>
-      <example-style></example-style>
-      <example-async></example-async>
       <example-method-container></example-method-container>
-      <example-template></example-template>
       <example-life-cycle .onLifeCycle=${logLifeCycle}></example-life-cycle>
     </section>
   `;

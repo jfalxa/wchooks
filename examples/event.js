@@ -17,7 +17,7 @@ function ExampleEvent() {
   return html`
     <fieldset>
       <legend>
-        <b>useEvent / useEventListener</b>
+        <b>useEvent</b>
       </legend>
       <button id="dispatch" @click=${() => dispatchEvent({ detail: new Date() })}>
         Dispatch custom event

@@ -14,7 +14,7 @@ function ExampleMethodContainer() {
 
   return html`
     <fieldset>
-      <legend><b>useMethod</b></legend>
+      <legend><b>useProperty (for methods)</b></legend>
       <button @click=${toggleCheckboxFromOutside}>
         Toggle checkbox from outside <i id="checked">(checked=${active})</i>
       </button>
