@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useEvent, useState, onRendered } from "../wchooks.mjs";
+import { Hooked, useEvent, useState, onRendered } from "../wchooks.js";
 
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);

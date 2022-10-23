@@ -1,7 +1,7 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
-import { useEvent } from "../wchooks.mjs";
-import { Hooked, useRef, useState, useProperties, onRendered } from "../wchooks.mjs";
+import { useEvent } from "../wchooks.js";
+import { Hooked, useRef, useState, useProperties, onRendered } from "../wchooks.js";
 
 function ExampleMethodContainer() {
   const methodRef = useRef();

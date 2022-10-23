@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useAsync } from "../wchooks.mjs";
+import { Hooked, useAsync } from "../wchooks.js";
 
 async function fetchData({ delay, shouldThrow }) {
   // fake waiting the specified delay before resolving

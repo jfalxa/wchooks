@@ -47,8 +47,8 @@ export function Hooked(renderer, render, options = {}) {
     }
 
     disconnectedCallback() {
-      this.clearLifeCycleCallbacks("updated");
       this.clearLifeCycleCallbacks("rendered");
+      this.clearLifeCycleCallbacks("updated");
     }
 
     getHook = (index) => {

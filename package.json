@@ -1,10 +1,6 @@
 {
   "name": "wchooks",
-<<<<<<< HEAD
   "version": "0.4.4",
-=======
-  "version": "0.2.9",
->>>>>>> 5ad5d96 (0.2.9)
   "author": "jfalxa",
   "license": "ISC",
   "description": "Hooks for webcomponents",
@@ -14,7 +10,6 @@
   "types": "wchooks.d.ts",
   "files": [
     "wchooks.js",
-    "wchooks.mjs",
     "wchooks.d.ts"
   ],
   "repository": {

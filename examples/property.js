@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat.js";
-import { Hooked, onRendered, useMemoize, useProperties } from "../wchooks.mjs";
+import { Hooked, onRendered, useMemoize, useProperties } from "../wchooks.js";
 
 function ExampleProperty() {
   // setup the "myProp" property of the custom element,

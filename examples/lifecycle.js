@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useProperties, onRendered, useReducer, onUpdated } from "../wchooks.mjs";
+import { Hooked, useProperties, onRendered, useReducer, onUpdated } from "../wchooks.js";
 
 function ExampleLifeCycle() {
   const [count, add] = useReducer(1, (count, increment) => count + increment);

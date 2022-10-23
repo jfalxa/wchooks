@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useAttributes } from "../wchooks.mjs";
+import { Hooked, useAttributes } from "../wchooks.js";
 
 function ExampleAttribute() {
   // control the "my-attr" attribute of the custom element (make sure to add it to observedAttributes)

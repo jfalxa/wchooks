@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { useMemoize, useState, Hooked } from "../wchooks.mjs";
+import { useMemoize, useState, Hooked } from "../wchooks.js";
 
 function ExampleState() {
   // create a dynamic state that rerenders the element when changed
