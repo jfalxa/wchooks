@@ -8,7 +8,6 @@ describe("Method hook", async () => {
 
   it("should expose a custom method", async () => {
     const view = checkout("example-method-container");
-
     await view.element.rendered;
 
     const child = view.get("example-method");
@@ -17,7 +16,6 @@ describe("Method hook", async () => {
 
   it("should rerender when calling the function from anywhere", async () => {
     const view = checkout("example-method-container");
-
     await view.element.rendered;
 
     const checked = view.get("#checked");
@@ -28,35 +26,34 @@ describe("Method hook", async () => {
     const checkbox = child.renderRoot.querySelector(`input[type="checkbox"]`);
     const childToggleButton = child.renderRoot.querySelector("button");
 
-    await view.element.rendered;
     expect(checkbox.checked).toBe(false);
     expect(toggle.textContent).toBe("OFF");
     expect(checked.textContent).toBe("(checked=false)");
 
     child.toggleCheckbox();
-
     await view.element.rendered;
+
     expect(checkbox.checked).toBe(true);
     expect(toggle.textContent).toBe("ON");
     expect(checked.textContent).toBe("(checked=true)");
 
     checkbox.click();
-
     await view.element.rendered;
+
     expect(checkbox.checked).toBe(false);
     expect(toggle.textContent).toBe("OFF");
     expect(checked.textContent).toBe("(checked=false)");
 
     childToggleButton.click();
-
     await view.element.rendered;
+
     expect(checkbox.checked).toBe(true);
     expect(toggle.textContent).toBe("ON");
     expect(checked.textContent).toBe("(checked=true)");
 
     parentToggleButton.click();
-
     await view.element.rendered;
+
     expect(checkbox.checked).toBe(false);
     expect(toggle.textContent).toBe("OFF");
     expect(checked.textContent).toBe("(checked=false)");

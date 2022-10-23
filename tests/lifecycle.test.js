@@ -19,56 +19,72 @@ describe("Lifecycle hooks", async () => {
 
   it("should keep track of a component's lifecycle", async () => {
     const view = checkout("example-life-cycle");
-
     await view.element.rendered;
 
     const nestedElement = view.get("example-nested-life-cycle");
-
     const updateButton = view.get("#update");
     const removeButton = view.get("#remove");
 
     expect(lifeCycleSteps.length).toBe(4);
 
-    expect(lifeCycleSteps[0].step).toBe("onConnected");
+    expect(lifeCycleSteps[0].step).toBe("onUpdated 1.");
     expect(lifeCycleSteps[0].element).toBe(view.element);
 
-    expect(lifeCycleSteps[1].step).toBe("onConnected");
-    expect(lifeCycleSteps[1].element).toBe(nestedElement);
+    expect(lifeCycleSteps[1].step).toBe("onRendered 1.");
+    expect(lifeCycleSteps[1].element).toBe(view.element);
 
-    expect(lifeCycleSteps[2].step).toBe("onRendered");
-    expect(lifeCycleSteps[2].element).toBe(view.element);
+    expect(lifeCycleSteps[2].step).toBe("onUpdated 1.");
+    expect(lifeCycleSteps[2].element).toBe(nestedElement);
 
-    expect(lifeCycleSteps[3].step).toBe("onRendered");
+    expect(lifeCycleSteps[3].step).toBe("onRendered 1.");
     expect(lifeCycleSteps[3].element).toBe(nestedElement);
 
     // force rerender
     updateButton.click();
     await view.element.rendered;
 
-    expect(lifeCycleSteps.length).toBe(6);
+    expect(lifeCycleSteps.length).toBe(12);
 
-    expect(lifeCycleSteps[4].step).toBe("onRendered (cleared)");
+    expect(lifeCycleSteps[4].step).toBe("onUpdated 1. (cleared)");
     expect(lifeCycleSteps[4].element).toBe(view.element);
 
-    expect(lifeCycleSteps[5].step).toBe("onRendered");
+    expect(lifeCycleSteps[5].step).toBe("onUpdated 2.");
     expect(lifeCycleSteps[5].element).toBe(view.element);
+
+    expect(lifeCycleSteps[6].step).toBe("onRendered 1. (cleared)");
+    expect(lifeCycleSteps[6].element).toBe(view.element);
+
+    expect(lifeCycleSteps[7].step).toBe("onRendered 2.");
+    expect(lifeCycleSteps[7].element).toBe(view.element);
+
+    expect(lifeCycleSteps[8].step).toBe("onUpdated 1. (cleared)");
+    expect(lifeCycleSteps[8].element).toBe(nestedElement);
+
+    expect(lifeCycleSteps[9].step).toBe("onUpdated 2.");
+    expect(lifeCycleSteps[9].element).toBe(nestedElement);
+
+    expect(lifeCycleSteps[10].step).toBe("onRendered 1. (cleared)");
+    expect(lifeCycleSteps[10].element).toBe(nestedElement);
+
+    expect(lifeCycleSteps[11].step).toBe("onRendered 2.");
+    expect(lifeCycleSteps[11].element).toBe(nestedElement);
 
     // force remove
     removeButton.click();
     await view.element.rendered;
 
-    expect(lifeCycleSteps.length).toBe(10);
+    expect(lifeCycleSteps.length).toBe(16);
 
-    expect(lifeCycleSteps[6].step).toBe("onDisconnected");
-    expect(lifeCycleSteps[6].element).toBe(view.element);
+    expect(lifeCycleSteps[12].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[12].element).toBe(view.element);
 
-    expect(lifeCycleSteps[7].step).toBe("onRendered (cleared)");
-    expect(lifeCycleSteps[7].element).toBe(view.element);
+    expect(lifeCycleSteps[13].step).toBe("onRendered 2. (cleared)");
+    expect(lifeCycleSteps[13].element).toBe(view.element);
 
-    expect(lifeCycleSteps[8].step).toBe("onDisconnected");
-    expect(lifeCycleSteps[8].element).toBe(nestedElement);
+    expect(lifeCycleSteps[14].step).toBe("onUpdated 2. (cleared)");
+    expect(lifeCycleSteps[14].element).toBe(nestedElement);
 
-    expect(lifeCycleSteps[9].step).toBe("onRendered (cleared)");
-    expect(lifeCycleSteps[9].element).toBe(nestedElement);
+    expect(lifeCycleSteps[15].step).toBe("onRendered 2. (cleared)");
+    expect(lifeCycleSteps[15].element).toBe(nestedElement);
   });
 });

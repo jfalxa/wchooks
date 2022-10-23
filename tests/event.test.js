@@ -8,24 +8,22 @@ describe("Event hook", async () => {
 
   it("should increment the counter when dispatching events", async () => {
     const view = checkout("example-event");
-
     await view.element.rendered;
 
     const dispatchButton = view.get("#dispatch");
     const counter = view.get("#counter");
 
-    await view.element.rendered;
     expect(counter.textContent).toBe("0");
 
     dispatchButton.click();
-
     await view.element.rendered;
+
     expect(counter.textContent).toBe("1");
 
     dispatchButton.click();
     dispatchButton.click();
-
     await view.element.rendered;
+
     expect(counter.textContent).toBe("3");
   });
 });

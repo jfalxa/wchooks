@@ -20,28 +20,32 @@ function ExampleAttribute() {
     <fieldset>
       <legend><b>useAttribute</b></legend>
       <input
+        id="num"
         type="number"
-        .value=${attributes["my-num"]}
+        .value=${String(attributes["my-num"])}
         @input=${(e) => setAttributes({ "my-num": e.target.value })}
       />
       <input
+        id="str"
         type="text"
         .value=${attributes["my-str"]}
         @input=${(e) => setAttributes({ "my-str": e.target.value })}
       />
       <input
+        id="bool"
         type="checkbox"
         .checked=${attributes["my-bool"]}
         @change=${(e) => setAttributes({ "my-bool": e.target.checked })}
       />
       <input
+        id="list"
         type="button"
         value="Append 0 to list"
         @click=${() => setAttributes({ "my-list": [...attributes["my-list"], 0] })}
       />
       <input
-        type="number"
-        .value=${attributes["my-custom"]}
+        id="custom"
+        .value=${String(attributes["my-custom"])}
         @input=${(e) => setAttributes({ "my-custom": e.target.value })}
       />
       <span>→ play with the attributes of <code>${"<example-attribute>"}</code> in the DOM</span>

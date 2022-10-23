@@ -8,33 +8,31 @@ describe("State hook", async () => {
 
   it("should change the counter when clicking the buttons", async () => {
     const view = checkout("example-state");
-
     await view.element.rendered;
 
     const incrementButton = view.get("#increment");
     const counter = view.get("#counter");
 
-    await view.element.rendered;
     expect(counter.textContent).toBe("0");
 
     incrementButton.click();
-
     await view.element.rendered;
+
     expect(counter.textContent).toBe("3");
   });
 
   it("should recompute the multiplier on every counter change", async () => {
     const view = checkout("example-state");
+    await view.element.rendered;
 
     const decrementButton = view.get("#decrement");
     const multiplier = view.get("#multiplier");
 
-    await view.element.rendered;
     expect(multiplier.textContent).toBe("(x5 = 0)");
 
     decrementButton.click();
-
     await view.element.rendered;
+
     expect(multiplier.textContent).toBe("(x5 = -5)");
   });
 });
