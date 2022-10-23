@@ -27,7 +27,7 @@ export function Hooked(renderer, render, options = {}) {
     hooks = [];
     hookIndex = -1;
     updateRequested = false;
-    rendered = Promise.resolve(true);
+    updated = Promise.resolve(true);
 
     constructor() {
       super();
@@ -70,7 +70,7 @@ export function Hooked(renderer, render, options = {}) {
     runUpdatedCallbacks = () => {
       this.hooks
         .filter((hook) => hook.type === "updated")
-        .forEach((hook) => hook.data.callback?.(this));
+        .forEach((hook) => hook.data.callback?.());
     };
 
     clearUpdatedCallbacks = () => {
@@ -79,22 +79,22 @@ export function Hooked(renderer, render, options = {}) {
         .forEach((hook) => hook.data.clearCallback?.());
     };
 
-    resolveRendered = () => {};
+    resolveUpdated = () => {};
 
-    resetRendered = () => {
-      this.rendered = new Promise((resolve) => {
-        this.resolveRendered = () => resolve(true);
+    resetUpdated = () => {
+      this.updated = new Promise((resolve) => {
+        this.resolveUpdated = () => resolve(true);
       });
     };
 
     requestUpdate = async () => {
       if (!this.updateRequested) {
-        this.resetRendered(); // prepare the promise that will resolve once all sync updates are done and rendered
+        this.resetUpdated(); // prepare the promise that will resolve once all sync updates are done and rendered
         this.updateRequested = true;
         await Promise.resolve(); // from this point, defer the execution of the rest of the function
         this.updateRequested = false;
         this.render(); // that way render() will be called only once, after all other sync updates are done
-        this.resolveRendered?.();
+        this.resolveUpdated?.();
         this.runUpdatedCallbacks();
       }
     };

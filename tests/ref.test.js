@@ -8,7 +8,7 @@ describe("State hook", async () => {
 
   it("should bind a ref to a DOM element", async () => {
     const view = checkout("example-dom-ref");
-    await view.element.rendered;
+    await view.element.updated;
 
     const input = view.get("input");
 

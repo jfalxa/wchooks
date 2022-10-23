@@ -19,7 +19,7 @@ describe("Lifecycle hooks", async () => {
 
   it("should keep track of a component's lifecycle", async () => {
     const view = checkout("example-life-cycle");
-    await view.element.rendered;
+    await view.element.updated;
 
     const nestedElement = view.get("example-nested-life-cycle");
     const updateButton = view.get("#update");
@@ -35,7 +35,7 @@ describe("Lifecycle hooks", async () => {
 
     // force rerender
     updateButton.click();
-    await view.element.rendered;
+    await view.element.updated;
 
     expect(lifeCycleSteps.length).toBe(6);
 
@@ -53,7 +53,7 @@ describe("Lifecycle hooks", async () => {
 
     // force remove
     removeButton.click();
-    await view.element.rendered;
+    await view.element.updated;
 
     expect(lifeCycleSteps.length).toBe(8);
 

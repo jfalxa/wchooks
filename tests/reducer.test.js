@@ -8,7 +8,7 @@ describe("Reducer hook", async () => {
 
   it("should change the counter when clicking the buttons", async () => {
     const view = checkout("example-reducer");
-    await view.element.rendered;
+    await view.element.updated;
 
     const counter = view.get("#counter");
     const addButton = view.get("#add");
@@ -18,12 +18,12 @@ describe("Reducer hook", async () => {
 
     addButton.click();
     addButton.click();
-    await view.element.rendered;
+    await view.element.updated;
 
     expect(counter.textContent).toBe("4");
 
     subButton.click();
-    await view.element.rendered;
+    await view.element.updated;
 
     expect(counter.textContent).toBe("2");
   });

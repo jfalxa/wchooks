@@ -170,12 +170,9 @@ Only recreate the value when the deps change.
 
 If no deps are specified, the value will be created only once and won't ever change.
 
-The array of deps is otherwise spread as arguments of the callback function.
+The array of deps is otherwise spread as arguments of the callback function. This allows to define your callback function outside the scope of your component, so you can enforce a clear list of deps for this function.
 
-This allows you to define your callback function outside the scope of your component, hence allowing you to enforce a clear list of deps for this function.
-
-You can also specify a custom `isEqual` function as last argument
-that will compare new props with old props in order to confirm that they have changed.
+You can also specify a custom `isEqual` function as last argument that will compare new deps with old deps to confirm that they have changed.
 
 ```typescript
 interface IsEqual<D extends any[]> {

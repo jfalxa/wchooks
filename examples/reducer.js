@@ -9,13 +9,11 @@ function ExampleReducer() {
 
       add(value) {
         const state = getState();
-        console.log("[reducer] Counter will be: ", state.total + value);
+        const _ = state.total + value; // this is just to show that you can also access the current state if neededd
         dispatch({ add: value });
       },
 
       sub(value) {
-        const state = getState();
-        console.log("[reducer] Counter will be: ", state.total - value);
         dispatch({ sub: value });
       },
     };
