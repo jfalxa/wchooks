@@ -7,10 +7,10 @@ export default defineConfig({
     outDir: ".",
 
     lib: {
-      entry: resolve(__dirname, "wchooks.mjs"),
+      entry: resolve(__dirname, "wchooks.js"),
       name: "wchooks",
       formats: ["es"],
-      fileName: () => "wchooks.js",
+      fileName: () => "wchooks.min.js",
     },
   },
 
@@ -23,7 +23,7 @@ export default defineConfig({
     },
 
     coverage: {
-      include: ["wchooks.mjs"],
+      include: ["wchooks.js"],
     },
   },
 });

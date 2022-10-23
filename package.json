@@ -1,6 +1,10 @@
 {
   "name": "wchooks",
+<<<<<<< HEAD
   "version": "0.4.4",
+=======
+  "version": "0.2.9",
+>>>>>>> 5ad5d96 (0.2.9)
   "author": "jfalxa",
   "license": "ISC",
   "description": "Hooks for webcomponents",
@@ -23,7 +27,7 @@
     "preview": "vite preview",
     "test": "vitest",
     "coverage": "vitest run --coverage",
-    "types": "tsc wchooks.mjs --allowJs --declaration --emitDeclarationOnly"
+    "types": "tsc wchooks.js --allowJs --declaration --emitDeclarationOnly"
   },
   "devDependencies": {
     "@vitest/coverage-c8": "^0.24.3",

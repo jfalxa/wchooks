@@ -1,4 +1,5 @@
 .vscode
 node_modules
 coverage
-/wchooks.js
+wchooks.min.js
+wchooks.d.ts
