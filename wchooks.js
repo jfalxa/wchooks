@@ -42,13 +42,14 @@ export function Hooked(renderer, render, options = {}) {
       this.requestUpdate();
     }
 
-    attributeChangedCallback() {
-      this.requestUpdate();
+    attributeChangedCallback(_, oldValue, newValue) {
+      if (newValue !== oldValue) {
+        this.requestUpdate();
+      }
     }
 
     disconnectedCallback() {
-      this.clearLifeCycleCallbacks("rendered");
-      this.clearLifeCycleCallbacks("updated");
+      this.clearUpdatedCallbacks();
     }
 
     getHook = (index) => {
@@ -66,15 +67,15 @@ export function Hooked(renderer, render, options = {}) {
       return index;
     };
 
-    runLifeCycleCallbacks = (step) => {
+    runUpdatedCallbacks = () => {
       this.hooks
-        .filter((hook) => hook.type === "lifecycle" && hook.data.step === step)
+        .filter((hook) => hook.type === "updated")
         .forEach((hook) => hook.data.callback?.(this));
     };
 
-    clearLifeCycleCallbacks = (step) => {
+    clearUpdatedCallbacks = () => {
       this.hooks
-        .filter((hook) => hook.type === "lifecycle" && hook.data.step === step)
+        .filter((hook) => hook.type === "updated")
         .forEach((hook) => hook.data.clearCallback?.());
     };
 
@@ -94,6 +95,7 @@ export function Hooked(renderer, render, options = {}) {
         this.updateRequested = false;
         this.render(); // that way render() will be called only once, after all other sync updates are done
         this.resolveRendered?.();
+        this.runUpdatedCallbacks();
       }
     };
 
@@ -101,9 +103,7 @@ export function Hooked(renderer, render, options = {}) {
       Hooks.setContext(this);
       this.hookIndex = -1; // reset the hook index before registering hooks again
       const templateResult = renderer();
-      this.runLifeCycleCallbacks("updated");
-      render(templateResult, this.renderRoot);
-      this.runLifeCycleCallbacks("rendered");
+      return render(templateResult, this.renderRoot);
     };
   };
 }
@@ -220,9 +220,11 @@ export function useState(createState) {
 export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
   const element = Hooks.getContext();
   const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
+
+  // get previously memoized value and associated deps
   const previous = element.getHook(index);
 
-  // update hook value when deps change, and only once if no deps are provided
+  // update hook value only when deps change
   if (!isEqual(deps, previous.deps)) {
     element.setHook(index, { deps, value: createValue(...deps) });
   }
@@ -260,45 +262,45 @@ export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
  * Creates a wrapper around an async function that allows tracking the evolution of the async operation
  * while preventing racing conditions between consecutive calls.
  *
- * If deps are given, the async function will be memoized using them and the optional isEqual argument.
- *
  * @template {AsyncFn} F
  * @param {F} asyncFn A function that returns a promise
  * @returns {Async<F>} A controller for the given async function
  */
-export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
-  const cancelRef = useRef(() => {});
+export function useAsync(asyncFn) {
+  // function to create a store that tracks the evolution of an async call
+  const asyncStore = (setState, getState) => ({
+    loading: false,
+    value: undefined,
+    error: undefined,
 
-  const [state, setState] = useReducer(
-    { loading: false, value: undefined, error: undefined },
-    (oldState, newState) => ({ ...oldState, ...newState })
-  );
+    // function to cancel the last async call
+    cancel() {},
 
-  // call the async function and track its evolution in the state
-  const call = useMemoize(
-    (...deps) =>
-      async (...args) => {
-        // cancel last call so it cannot update the state during newer calls
-        cancelRef.value();
+    // function to start the async call and update the state as it evolves
+    async call(...args) {
+      // cancel last call so it cannot update the state during newer calls
+      getState().cancel();
 
-        // prepare the function to cancel this call
-        let cancelled = false;
-        cancelRef.value = () => (cancelled = true);
+      // prepare the function to cancel this call
+      let cancelled = false;
+      const cancel = () => (cancelled = true);
 
-        try {
-          if (!cancelled) setState({ loading: true });
-          const value = await asyncFn(...args, ...deps);
-          if (!cancelled) setState({ loading: false, error: undefined, value });
-          return value;
-        } catch (error) {
-          if (!cancelled) setState({ loading: false, value: undefined, error });
-        }
-      },
-    deps,
-    isEqual
-  );
+      try {
+        if (!cancelled) setState({ loading: true, cancel });
+        const value = await asyncFn(...args);
+        if (!cancelled) setState({ loading: false, error: undefined, value });
+        return value;
+      } catch (error) {
+        if (!cancelled) setState({ loading: false, value: undefined, error });
+      }
+    },
+  });
 
-  return { ...state, call };
+  // reducer that merges new state with old state on dispatch
+  const mergeState = (oldState, newState) => ({ ...oldState, ...newState });
+
+  // only return the state of the reducer hook
+  return useReducer(asyncStore, mergeState)[0];
 }
 
 /**
@@ -347,12 +349,14 @@ export function useAsync(asyncFn, deps = [], isEqual = isShallowEqual) {
  */
 export function useAttributes(attributes) {
   const element = Hooks.getContext();
-  const attrNames = Object.keys(attributes);
 
   const index = element.registerHook("attributes", () => {
+    const attributeNames = Object.keys(attributes);
+
+    // grap and parse the current list of values for the wanted attributes
     function getAttributes() {
       return Object.fromEntries(
-        attrNames.map((name) => [name, getAttribute(element, name, attributes[name])])
+        attributeNames.map((name) => [name, getAttribute(element, name, attributes[name])])
       );
     }
 
@@ -366,15 +370,13 @@ export function useAttributes(attributes) {
       });
     }
 
+    // initialize unspecified attributes with default values
+    attributeNames
+      .filter((name) => !element.hasAttribute(name))
+      .forEach((name) => setAttribute(element, name, attributes[name], attributes[name]));
+
     return [getAttributes, setAttributes];
   });
-
-  // initialize unspecified attributes with default values
-  onUpdated(() => {
-    attrNames
-      .filter((name) => !element.hasAttribute(name))
-      .forEach((name) => setAttribute(element, name, attributes[name], attributes[name])); // prettier-ignore
-  }, []);
 
   // recompute the list of attributes on every render
   const [getAttributes, setAttributes] = element.getHook(index);
@@ -396,13 +398,14 @@ export function useAttributes(attributes) {
  */
 export function useProperties(properties) {
   const element = Hooks.getContext();
-  const propNames = Object.keys(properties);
 
   const index = element.registerHook("properties", () => {
+    const propertyNames = Object.keys(properties);
+
     // build a list of properties based of their value inside the element
     function getProperties() {
       return Object.fromEntries(
-        propNames.map((name) => [name, name in element ? element[name] : properties[name]])
+        propertyNames.map((name) => [name, name in element ? element[name] : properties[name]])
       );
     }
 
@@ -416,13 +419,11 @@ export function useProperties(properties) {
       });
     }
 
+    // start observing listed properties and initialize the unspecified ones with default values
+    propertyNames.forEach((name) => observeProperty(element, name, properties[name]));
+
     return [getProperties, setProperties];
   });
-
-  // on first update, start observing listed properties and initialize the unspecified ones with default values
-  onUpdated(() => {
-    propNames.forEach((name) => observeProperty(element, name, properties[name]));
-  }, []);
 
   // recompute the list of properties every time the component is rendered
   const [getProperties, setProperties] = element.getHook(index);
@@ -468,27 +469,6 @@ export function useEvent(event, options) {
  */
 
 /**
- * A lifecycle hook that will run after a batch of update has finished but has not yet been rendered to the DOM.
- *
- * If no deps are specified, the callback will be run after every update.
- *
- * The array of deps is otherwise spread as arguments of the callback function.
- * This allows you to define your callback function outside the scope of your component,
- * hence allowing you to enforce a clear list of deps for this function.
- *
- * You can also specify a custom `isEqual` function as last argument
- * that will compare new props with old props in order to confirm that they have changed.
- *
- * @template {any[]} D
- * @param {LifeCycleCallback<D>} updatedCallback A callback to be run after an update but before render
- * @param {D=} deps A list of deps to limit when the callback will be called
- * @param {IsEqual<D>=} isEqual A function to check if deps have changed
- */
-export function onUpdated(updatedCallback, deps, isEqual) {
-  useLifeCycleWithDeps("updated", updatedCallback, deps, isEqual);
-}
-
-/**
  * A lifecycle hook that will run after a batch of update has been rendered to the DOM.
  *
  * If no deps are specified, the callback will be run after every update.
@@ -501,31 +481,27 @@ export function onUpdated(updatedCallback, deps, isEqual) {
  * that will compare new props with old props in order to confirm that they have changed.
  *
  * @template {any[]} D
- * @param {LifeCycleCallback<D>} renderedCallback A callback to be run after render
+ * @param {LifeCycleCallback<D>} updatedCallback A callback to be run after an update
  * @param {D=} deps A list of deps to limit when the callback will be called
  * @param {IsEqual<D>=} isEqual A function to check if deps have changed
  */
-export function onRendered(renderedCallback, deps, isEqual) {
-  useLifeCycleWithDeps("rendered", renderedCallback, deps, isEqual);
-}
-
-function useLifeCycleWithDeps(step, stepCallback, deps, isEqual = isShallowEqual) {
+export function onUpdated(updatedCallback, deps, isEqual = isShallowEqual) {
   const element = Hooks.getContext();
 
-  const index = element.registerHook("lifecycle", () => ({ step }));
+  const index = element.registerHook("updated", () => ({}));
   const previous = element.getHook(index);
 
   // rerun side effect only if deps have changed
   function callback() {
     if (!isEqual(deps, previous.deps)) {
-      previous.clearCallback?.();
-      const clearCallback = stepCallback(element, ...(deps ?? []));
-      element.setHook(index, { step, callback, clearCallback, deps });
+      if (previous.clearCallback) previous.clearCallback();
+      const clearCallback = updatedCallback(element, ...(deps ?? []));
+      element.setHook(index, { callback, clearCallback, deps });
     }
   }
 
   // update the callback function on every render so it's fresh when it's called
-  element.setHook(index, { step, callback, deps: previous.deps });
+  element.setHook(index, { callback, deps: previous.deps });
 }
 
 function observeProperty(element, property, defaultValue) {
@@ -534,6 +510,7 @@ function observeProperty(element, property, defaultValue) {
   // save the base value inside the hidden property
   element[_property] = element[_property] ?? element[property] ?? defaultValue;
 
+  // define a proxy to access this hidden value
   Object.defineProperty(element, property, {
     enumerable: true,
     get() {
