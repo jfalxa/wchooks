@@ -24,7 +24,7 @@ function ExampleLifeCycle() {
   return html`
     <fieldset>
       <legend>
-        <b>onUpdated / onUpdated</b>
+        <b>onUpdated</b>
       </legend>
       <button id="update" @click=${() => add(1)}>Force update</button>
       <button id="remove" @click=${(e) => removeHostFromDocument(e.target)}>
