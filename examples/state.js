@@ -6,7 +6,7 @@ function ExampleState() {
   const [counter, setCounter] = useState(0);
 
   // update this variable with the current date only when the counter has just changed
-  const counterTimes5 = useMemoize(() => counter * 5, [counter]);
+  const counterTimes5 = useMemoize((counter) => counter * 5, [counter]);
 
   function increment() {
     setCounter((counter) => counter + 1);

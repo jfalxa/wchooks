@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useAttributes, useEffect, useEvent, useState } from "../wchooks.js";
+import { Hooked, useAttributes, useEvent, useState } from "../wchooks.js";
 
 function ExampleAttributeContainer() {
   const [state, setState] = useState({

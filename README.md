@@ -235,11 +235,15 @@ function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent
 
 ## Dependency hooks
 
-This library tries to mitigate the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along with your state.
+This library tries to address the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along with your states.
 
-When used, these hooks spread dependencies as arguments to their callback, so you can define these callbacks outside the scope of your component This allows you to define a clear list of dependencies, hence avoiding stale closure issues altogether.
+As opposed to React, the callbacks for these hooks are registered only during the first render, so any following rerender will not affect the values in their closure. This means that you cannot directly use values coming from e.g. `useState` or `useProperties` inside your callback function as every time it'll be called, these values will remain the same they were the first time the component was rendered, even if the state or property has actually changed in the meantime.
 
-They also accept a custom `isEqual` function as last argument that will compare new deps with old deps to confirm that they have changed.
+> Note: exceptions to this are refs from `useRef`, the setter function of `useState` and the dispatch function of `useReducer`, as they all remain exactly the same throughout the life of your component. The same goes for any other static references coming from outside your component.
+
+So if you want to actually make your hooks aware of their surrounding, you can give them a list of dependencies as second argument. Then, when a hook callback will be called, all those deps will be spread as its arguments. This mitigates stale dependency bugs by forcing you to create a clear scope in which your hook should work. It results in a more verbose code than React's, but maybe it's for the best.
+
+Hooks with deps also accept a custom `isEqual` function as third argument. It will be used when comparing new deps with old deps to confirm that they have changed.
 
 ### useMemoize
 
