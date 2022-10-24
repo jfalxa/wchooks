@@ -6,7 +6,6 @@ import "./async.js";
 import "./attribute.js";
 import "./event.js";
 import "./lifecycle.js";
-import "./method.js";
 import "./property.js";
 import "./ref.js";
 import "./state.js";
@@ -40,7 +39,6 @@ function ExampleApp() {
       <example-event></example-event>
       <example-attribute-container></example-attribute-container>
       <example-property-container></example-property-container>
-      <example-method-container></example-method-container>
       <example-life-cycle .onLifeCycle=${logLifeCycle}></example-life-cycle>
     </section>
   `;

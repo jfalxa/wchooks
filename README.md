@@ -202,9 +202,7 @@ function useAttributes<A extends { [name: string]: any }>(initialAttributes: A):
 
 ### useProperties
 
-[→ See the example (value)](/examples/property.js)
-
-[→ See the example (method)](/examples/method.js)
+[→ See the example](/examples/property.js)
 
 Specify a list of default values for the element's properties and return their current actual value.
 
@@ -212,6 +210,8 @@ The properties are initialized with the given default value.
 Then, any time they'll be modified, it will trigger an update.
 
 These properties become accessible directly on the DOM element, wether they are values or functions. This allows you to build an API to control your component private state from the outside.
+
+If your property is defined as a function, it will automatically be bound to the hooked element. That way you can access the component inside the method with `this`. Note that this won't work if you define your property as an arrow function, as they cannot be rebound.
 
 ```typescript
 function useProperties<P extends { [name: string]: any }>(properties: P): P;

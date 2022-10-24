@@ -55,4 +55,36 @@ describe("Property hook", async () => {
     expect(component.myProp).toStrictEqual([1, 2, 3, 4, 5]);
     expect(list.textContent).toBe("= [1, 2, 3, 4, 5, *]");
   });
+
+  it("should clear the list when clicking the reset button", async () => {
+    const view = checkout("example-property-container");
+    await view.element.updated;
+
+    const component = view.get("example-property");
+    const addButton = view.get("#add");
+    const list = component.renderRoot.querySelector("#list");
+
+    const resetChild = component.renderRoot.querySelector("#reset");
+    const resetChildFromParent = view.get("#reset");
+
+    expect(list.textContent).toBe("= [1, 2, 3, 4, *]");
+
+    resetChild.click();
+    await component.updated;
+
+    expect(list.textContent).toBe("= [*]");
+
+    addButton.click();
+    await view.element.updated;
+
+    addButton.click();
+    await view.element.updated;
+
+    expect(list.textContent).toBe("= [1, 2, *]");
+
+    resetChildFromParent.click();
+    await component.updated;
+
+    expect(list.textContent).toBe("= [*]");
+  });
 });
