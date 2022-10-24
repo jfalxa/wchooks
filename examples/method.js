@@ -28,7 +28,7 @@ function ExampleMethod() {
   const [active, setActive] = useState(false);
   const dispatchChange = useEvent("change");
 
-  const [props] = useProperties({
+  const props = useProperties({
     // the method is bound to the element under the specified name
     // and it is also returned here so we can access it in the rendering scope
     toggleCheckbox(forceActive) {

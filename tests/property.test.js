@@ -4,33 +4,37 @@ import { checkout, render } from "./utils";
 import "../examples/property";
 
 describe("Property hook", async () => {
-  beforeEach(() => render("<example-property></example-property>"));
+  beforeEach(() => render("<example-property-container></example-property-container>"));
 
   it("should expose a custom property", async () => {
-    const view = checkout("example-property");
-    await view.element.updated;
-    expect(view.element.myProp).toStrictEqual([1, 2, 3, 4]);
+    const view = checkout("example-property-container");
+    const component = view.get("example-property");
+    await component.updated;
+    expect(component.myProp).toStrictEqual([1, 2, 3, 4]);
   });
 
   it("should rerender the list when changing the property", async () => {
-    const view = checkout("example-property");
+    const view = checkout("example-property-container");
     await view.element.updated;
 
-    const list = view.get("#list");
+    const component = view.get("example-property");
+    const list = component.renderRoot.querySelector("#list");
 
     expect(list.textContent).toBe("= [1, 2, 3, 4, *]");
 
-    view.element.myProp = ["a", "b", "c"];
-    await view.element.updated;
+    component.myProp = ["a", "b", "c"];
+    await component.updated;
 
     expect(list.textContent).toBe("= [a, b, c, *]");
   });
 
   it("should update the property when adding elements with the buttons", async () => {
-    const view = checkout("example-property");
+    const view = checkout("example-property-container");
     await view.element.updated;
 
-    const list = view.get("#list");
+    const component = view.get("example-property");
+    const list = component.renderRoot.querySelector("#list");
+
     const addButton = view.get("#add");
     const removeButton = view.get("#remove");
 
@@ -42,13 +46,13 @@ describe("Property hook", async () => {
     addButton.click();
     await view.element.updated;
 
-    expect(view.element.myProp).toStrictEqual([1, 2, 3, 4, 5, 6]);
+    expect(component.myProp).toStrictEqual([1, 2, 3, 4, 5, 6]);
     expect(list.textContent).toBe("= [1, 2, 3, 4, 5, 6, *]");
 
     removeButton.click();
     await view.element.updated;
 
-    expect(view.element.myProp).toStrictEqual([1, 2, 3, 4, 5]);
+    expect(component.myProp).toStrictEqual([1, 2, 3, 4, 5]);
     expect(list.textContent).toBe("= [1, 2, 3, 4, 5, *]");
   });
 });

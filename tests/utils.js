@@ -2,8 +2,8 @@ export function render(html) {
   document.body.innerHTML = html;
 }
 
-export function checkout(selector) {
-  const element = document.querySelector(selector);
+export function checkout(selector, root = document) {
+  const element = root.querySelector(selector);
   if (element === null) throw new Error(`No element found with selector ${selector}`);
 
   function query(selector) {

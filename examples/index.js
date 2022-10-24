@@ -38,8 +38,8 @@ function ExampleApp() {
       <example-reducer></example-reducer>
       <example-async></example-async>
       <example-event></example-event>
-      <example-attribute></example-attribute>
-      <example-property></example-property>
+      <example-attribute-container></example-attribute-container>
+      <example-property-container></example-property-container>
       <example-method-container></example-method-container>
       <example-life-cycle .onLifeCycle=${logLifeCycle}></example-life-cycle>
     </section>

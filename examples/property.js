@@ -1,16 +1,12 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat.js";
-import { Hooked, useEffect, useMemoize, useProperties } from "../wchooks.js";
+import { Hooked, useEffect, useMemoize, useProperties, useState } from "../wchooks.js";
 
-function ExampleProperty() {
-  // setup the "myProp" property of the custom element,
-  // you'll then be able to access it directly with element.myProp
-  const [props, setProps] = useProperties({
-    myProp: [1, 2, 3, 4],
-  });
+function ExamplePropertyContainer() {
+  const [myProp, setMyProp] = useState([1, 2, 3, 4]);
 
   // list memoize dependencies
-  const deps = [props.myProp];
+  const deps = [myProp];
 
   // define the function that checks if the deps have changed
   const areDepsEqual = ([myProp], [oldMyProp] = []) => myProp?.length === oldMyProp?.length;
@@ -21,31 +17,44 @@ function ExampleProperty() {
       // add (last element + 1) to the myProp list
       addMyPropItem() {
         const last = myProp[myProp.length - 1] ?? 0;
-        setProps({ myProp: [...myProp, last + 1] });
+        setMyProp([...myProp, last + 1]);
       },
 
       // remove last element from the myProp list
       removeMyPropItem() {
-        setProps({ myProp: myProp.slice(0, -1) });
+        setMyProp(myProp.slice(0, -1));
       },
     }),
     deps,
     areDepsEqual
   );
 
-  useEffect((element) => {
-    window.exampleProperty = element;
-  }, []);
-
   return html`
     <fieldset>
       <legend><b>useProperty / useMemoize</b></legend>
       <button id="add" @click=${addMyPropItem}>Add</button>
       <button id="remove" @click=${removeMyPropItem}>Remove</button>
-      <span id="list">= [${repeat(props.myProp, (value) => html`<b>${value}</b>, `)}*]</span>
+      <example-property .myProp=${myProp}></example-property>
       <span>→ play with <code>window.exampleProperty.myProp</code> in the console</span>
     </fieldset>
   `;
 }
 
+function ExampleProperty() {
+  // setup the "myProp" property of the custom element,
+  // you'll then be able to access it directly with element.myProp
+  const props = useProperties({
+    myProp: [1, 2, 3, 4],
+  });
+
+  useEffect((element) => {
+    window.exampleProperty = element;
+  }, []);
+
+  return html`
+    <span id="list">= [${repeat(props.myProp, (value) => html`<b>${value}</b>, `)}*]</span>
+  `;
+}
+
 customElements.define("example-property", Hooked(ExampleProperty, render));
+customElements.define("example-property-container", Hooked(ExamplePropertyContainer, render));

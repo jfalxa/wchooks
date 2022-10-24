@@ -4,7 +4,7 @@ import { Hooked, useProperties, useReducer, useEffect } from "../wchooks.js";
 function ExampleLifeCycle() {
   const [count, add] = useReducer(1, (count, increment) => count + increment);
 
-  const [props] = useProperties({ onLifeCycle: undefined });
+  const props = useProperties({ onLifeCycle: undefined });
 
   // add a callback to be run just after the update to count has been rendered to the dom
   useEffect(
@@ -40,7 +40,7 @@ function ExampleLifeCycle() {
 }
 
 function ExampleNestedLifeCycle() {
-  const [props] = useProperties({ count: 0, onLifeCycle: undefined });
+  const props = useProperties({ count: 0, onLifeCycle: undefined });
 
   useEffect(
     (element, count) => {
