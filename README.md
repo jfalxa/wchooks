@@ -4,15 +4,16 @@
 ![](https://badgen.net/npm/types/wchooks)
 ![](https://badgen.net/bundlephobia/minzip/wchooks)
 
-Hooks tailored for web components, inspired by https://github.com/matthewp/haunted
+React-like Hooks tailored for Web Components, inspired by https://github.com/matthewp/haunted
 
 ## Description
 
 The core idea is similar to [React's hooks](https://reactjs.org/docs/hooks-intro.html) so you will feel at home if you're already familiar with them.
 
-How it departs from React is that those hooks are built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) in mind so, while trying to remain as small as possible, they also try to abstract some of the most common operations that are needed to build a usable custom element.
-
-Note that there are some constraints on how you can use hooks, for more information you can read the [Rules of Hooks](https://reactjs.org/docs/hooks-rules.html) of React.
+The library has been made with three objectives in mind:
+- provide hooks that improve the developer experience of building web components
+- remain as small as possible without sacrificing code readability
+- try to address problems inherent to react-like hooks, notably dependency tracking hell
 
 ## Usage
 
@@ -21,13 +22,15 @@ This library being published on npm, you can:
 - `npm install wchooks` if you are using a bundler
 - import the module from a CDN, e.g. `import { useState } from "https://unpkg.com/wchooks"`
 
+In your project you will also have to import a library like [`lit-html`](https://lit.dev/docs/v1/lit-html/introduction/) because `wchooks` is designed to offload the actual DOM rendering to these external libraries, as they already do a perfect job.
+
 ## Basic example
 
 A counter with a button to increment its value:
 
 ```js
 import { html, render } from "lit-html";
-import { Hooked, useState, useEffect } from "wchooks";
+import { withHooks, useState, useEffect } from "wchooks";
 
 const Counter = () => {
   const [counter, setCounter] = useState(0);
@@ -44,21 +47,47 @@ const Counter = () => {
   `;
 };
 
-customElements.define("my-counter", Hooked(Counter, render));
+customElements.define("my-counter", withHooks(Counter, render));
 ```
 
-## Hooked factory
+## API reference
 
-The `Hooked` factory is the function used to build a custom `HTMLElement` that can work with hooks.
+### Factory
+
+- [withHooks factory](#withHooks-factory)
+- [Options](#options)
+
+### Data hooks
+
+- [useRef](#useref)
+- [useState](#usestate)
+- [useReducer](#usereducer)
+- [useAsync](#useasync)
+
+### HTMLElement hooks
+
+- [useAttributes](#useattributes)
+- [useProperties](#useproperties)
+- [useEvent](#useevent)
+
+### Dependency hooks
+
+- [Note on dependencies](#note-on-dependencies)
+- [useMemoize](#usememoize)
+- [useEffect](#useEffect)
+
+## withHooks factory
+
+The `withHooks` factory is the function used to build a custom `HTMLElement` that can work with hooks.
 
 Its first argument should be a renderer function that runs hooks and returns a value that can be rendered with the `render` function passed as second argument.
 
 This `render` function applies the templates returned by your renderers to the DOM, this is e.g. `import { render } from "lit-html"`.
 
-The class returned by the `Hooked` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
+The class returned by the `withHooks` factory is an extension of `HTMLElement` and can be used when calling `customElements.define()`.
 
 ```typescript
-function Hooked<T>(
+function withHooks<T>(
   renderer: () => T,
   render: (templateResult: T, root: ParentNode) => void,
   options?: HookedOptions
@@ -80,26 +109,6 @@ interface HookedOptions {
   observedAttributes?: string[];
 }
 ```
-
-## List of hooks
-
-### Data hooks
-
-1. [useRef](#useref)
-2. [useState](#usestate)
-3. [useReducer](#usereducer)
-4. [useAsync](#useasync)
-
-### HTMLElement hooks
-
-5. [useAttributes](#useattributes)
-6. [useProperties](#useproperties)
-7. [useEvent](#useevent)
-
-### Dependency hooks
-
-8. [useMemoize](#usememoize)
-9. [useEffect](#useEffect)
 
 ## Data hooks
 
@@ -211,7 +220,7 @@ Then, any time they'll be modified, it will trigger an update.
 
 These properties become accessible directly on the DOM element, wether they are values or functions. This allows you to build an API to control your component private state from the outside.
 
-If your property is defined as a function, it will automatically be bound to the hooked element. That way you can access the component inside the method with `this`. Note that this won't work if you define your property as an arrow function, as they cannot be rebound.
+If your property is defined as a function, it will automatically be bound to the withHooks element. That way you can access the component inside the method with `this`. Note that this won't work if you define your property as an arrow function, as they cannot be rebound.
 
 ```typescript
 function useProperties<P extends { [name: string]: any }>(properties: P): P;
@@ -234,6 +243,8 @@ function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent
 ```
 
 ## Dependency hooks
+
+### Note on dependencies
 
 This library tries to address the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along with your states.
 
