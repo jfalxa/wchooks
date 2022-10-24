@@ -360,9 +360,7 @@ export function useProperties(properties) {
 
     // build a list of properties based of their value inside the element
     return function getProperties() {
-      return Object.fromEntries(
-        propertyNames.map((name) => [name, name in element ? element[name] : properties[name]])
-      );
+      return Object.fromEntries(propertyNames.map((name) => [name, element[name]]));
     };
   });
 
@@ -449,6 +447,11 @@ function observeProperty(element, property, defaultValue) {
 
   // save the base value inside the hidden property
   element[_property] = element[_property] ?? element[property] ?? defaultValue;
+
+  // in case we're passing a function, bind its this to the current element
+  if (typeof element[_property] === "function") {
+    element[_property] = element[_property].bind(element);
+  }
 
   // define a proxy to access this hidden value
   Object.defineProperty(element, property, {
