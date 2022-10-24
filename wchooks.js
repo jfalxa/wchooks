@@ -70,13 +70,13 @@ export function withHooks(renderer, render, options = {}) {
     runEffects = () => {
       this.hooks
         .filter((hook) => hook.type === "effect") //
-        .forEach((hook) => hook.data.callback?.());
+        .forEach((hook) => hook.data.effect());
     };
 
     clearEffects = () => {
       this.hooks
         .filter((hook) => hook.type === "effect")
-        .forEach((hook) => hook.data.clearCallback?.());
+        .forEach((hook) => hook.data.clearEffect?.());
     };
 
     resolveUpdated = () => {};
@@ -368,7 +368,7 @@ export function useEvent(event, options) {
  * A function to check if two different list of deps are actually the same
  *
  * @template {any[]} D
- * @typedef {(D | undefined, D | undefined) => boolean} IsEqual
+ * @typedef {(deps: D | undefined, oldDeps: D | undefined) => boolean} IsEqual
  */
 
 /**
@@ -398,7 +398,7 @@ export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
       const hook = element.getHook(index);
       if (isEqual(hook.deps, hook.oldDeps)) return hook.value;
 
-      const value = createValue(...(hook.deps ?? []));
+      const value = createValue(...hook.deps);
       element.setHook(index, { getValue, value, oldDeps: hook.deps });
       return value;
     }
@@ -407,9 +407,9 @@ export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
   });
 
   const hook = element.getHook(index);
-  // update the list of deps on every render so the callback can check them later
-  element.setHook(index, (previous) => ({ ...previous, deps }));
-  // return the memoized value
+  // update the list of deps on every render so getValue can check them later
+  element.setHook(index, { ...hook, deps });
+  // return the memoized value or recompute it if deps have changed
   return hook.getValue();
 }
 
@@ -441,17 +441,17 @@ export function useEffect(effectCallback, deps, isEqual = isShallowEqual) {
   const element = Hooks.getContext();
 
   const index = element.registerHook("effect", () => {
-    function callback() {
+    function effect() {
       const hook = element.getHook(index);
       // rerun side effect only if deps have changed
       if (!isEqual(hook.deps, hook.oldDeps)) {
-        if (hook.clearCallback) hook.clearCallback();
-        const clearCallback = effectCallback(element, ...(hook.deps ?? []));
-        element.setHook(index, { callback, clearCallback, olDeps: hook.deps });
+        if (hook.clearEffect) hook.clearEffect();
+        const clearEffect = effectCallback(element, ...(hook.deps ?? []));
+        element.setHook(index, { effect, clearEffect, olDeps: hook.deps });
       }
     }
 
-    return { callback };
+    return { effect };
   });
 
   // update the list of deps on every render so the callback can check them later
