@@ -1,7 +1,7 @@
 const Hooks = createHookContext();
 
 /**
- * Options to customize the behavior of the `Hooked` factory
+ * Options to customize the behavior of the `withHooks` factory
  *
  * @typedef {Object} HookedOptions
  * @property {typeof HTMLElement} [Element] Base element class that your component should extend
@@ -10,15 +10,15 @@ const Hooks = createHookContext();
  */
 
 /**
- * The `Hooked` factory allows you to build a custom `HTMLElement` that can work with hooks.
+ * The `withHooks` factory allows you to build a custom `HTMLElement` that can work with hooks.
  *
  * @template T
  * @param {() => T} renderer A function that can run hooks and return a template that will be rendered with the passed `render` function
  * @param {(template: T, root: ParentNode) => void} render A function that renders a template genereated by the `renderer` function inside the given element in the DOM
- * @param {HookedOptions} [options] Options to customize the behavior of the `Hooked` factory
+ * @param {HookedOptions} [options] Options to customize the behavior of the `withHooks` factory
  * @returns {CustomElementConstructor} A constructor for a custom element that will run hooks
  */
-export function Hooked(renderer, render, options = {}) {
+export function withHooks(renderer, render, options = {}) {
   return class HookedHTMLElement extends (options.Element ?? HTMLElement) {
     static observedAttributes = options.observedAttributes;
 
@@ -94,7 +94,7 @@ export function Hooked(renderer, render, options = {}) {
         await Promise.resolve(); // from this point, defer the execution of the rest of the function
         this.updateRequested = false;
         this.render(); // that way render() will be called only once, after all other sync updates are done
-        this.resolveUpdated?.();
+        this.resolveUpdated();
         this.runEffects();
       }
     };
