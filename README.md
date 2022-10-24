@@ -10,7 +10,7 @@ Hooks tailored for web components, inspired by https://github.com/matthewp/haunt
 
 The core idea is similar to [React's hooks](https://reactjs.org/docs/hooks-intro.html) so you will feel at home if you're already familiar with them.
 
-How it departs from React is that those hooks are built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) in mind so, while trying to remain as small as possible, they also try to abstract the most common operations that are needed to build a usable custom element.
+How it departs from React is that those hooks are built with [Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components) in mind so, while trying to remain as small as possible, they also try to abstract some of the most common operations that are needed to build a usable custom element.
 
 Note that there are some constraints on how you can use hooks, for more information you can read the [Rules of Hooks](https://reactjs.org/docs/hooks-rules.html) of React.
 
@@ -88,17 +88,17 @@ interface HookedOptions {
 1. [useRef](#useref)
 2. [useState](#usestate)
 3. [useReducer](#usereducer)
-4. [useMemoize](#usememoize)
-5. [useAsync](#useasync)
+4. [useAsync](#useasync)
 
 ### HTMLElement hooks
 
-6. [useAttributes](#useattributes)
-7. [useProperties](#useproperties)
-8. [useEvent](#useevent)
+5. [useAttributes](#useattributes)
+6. [useProperties](#useproperties)
+7. [useEvent](#useevent)
 
-### Lifecycle hooks
+### Dependency hooks
 
+8. [useMemoize](#usememoize)
 9. [useEffect](#useEffect)
 
 ## Data hooks
@@ -123,7 +123,7 @@ function useRef<T>(initialValue: T): Ref<T>;
 
 Create a dynamic state that triggers a rerender when it is changed through the returned setter.
 
-Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`, `useAttributes` and `useProperties`.
+Successive synchronous calls to any setters will be batched and trigger only one update. This is also true for the setters of `useReducer`.
 
 ```typescript
 interface Setter<T> {
@@ -160,28 +160,6 @@ interface CreateState<T, A> {
 function useReducer<T, A>(createState: T | CreateState<T>, reducer: Reducer<T, A>): [T, Dispatch<A>];
 ```
 
-### useMemoize
-
-[→ See the example (1)](/examples/state.js)
-
-[→ See the example (2)](/examples/property.js)
-
-Only recreate the value when the deps change.
-
-If no deps are specified, the value will be created only once and won't ever change.
-
-The array of deps is otherwise spread as arguments of the callback function. This allows to define your callback function outside the scope of your component, so you can enforce a clear list of deps for this function.
-
-You can also specify a custom `isEqual` function as last argument that will compare new deps with old deps to confirm that they have changed.
-
-```typescript
-interface IsEqual<D extends any[]> {
-  (deps: D | undefined, oldDeps: D | undefined) => boolean
-}
-
-function useMemoize<T, D extends any[]>(createValue: (...deps: D) => T, deps?: D, isEqual?: IsEqual<D>): T;
-```
-
 ### useAsync
 
 [→ See the example](/examples/async.js)
@@ -209,7 +187,7 @@ function useAsync<F extends AsyncFn>(asyncFn: F): Async<F>;
 
 [→ See the example](/examples/attribute.js)
 
-Bind many attributes to a component.
+Specify a list of default values for the element's attributes and return their current actual value.
 
 For these attributes to trigger an update when they change, they should be added to the component `observedAttributes`.
 
@@ -218,18 +196,10 @@ The attributes default values passed as argument will be used to guess the kind 
 For example, if we have `{ "my-flag": true }`, the attribute will be shown as `"my-flag"=""` in the DOM.
 If we have `{ "my-flag": false }`, the attribute will be removed.
 
-You can also customize the parsing/serialization by passing a function as default value. This function should return an object with 3 keys:
-
-- `defaultValue`: the initial value for this attribute
-- `get`: a function that parses the attribute DOM string into the wanted value
-- `set`: a function that serializes a value into a string to be written in the DOM
-
 ```typescript
 // The Attributes type flattens the list of default values to get the actual types that will be parsed from the DOM.
 
-function useAttributes<A extends { [name: string]: any }>(
-  initialAttributes: A
-): [Attributes<A>, (values: Attributes<Partial<A>>) => void];
+function useAttributes<A extends { [name: string]: any }>(initialAttributes: A): Attributes<A>;
 ```
 
 ### useProperties
@@ -238,7 +208,7 @@ function useAttributes<A extends { [name: string]: any }>(
 
 [→ See the example (method)](/examples/method.js)
 
-Bind a list of properties to the current element.
+Specify a list of default values for the element's properties and return their current actual value.
 
 The properties are initialized with the given default value.
 Then, any time they'll be modified, it will trigger an update.
@@ -246,9 +216,7 @@ Then, any time they'll be modified, it will trigger an update.
 These properties become accessible directly on the DOM element, wether they are values or functions. This allows you to build an API to control your component private state from the outside.
 
 ```typescript
-function useProperties<P extends { [name: string]: any }>(
-  properties: P
-): [P, (values: Partial<P>) => void];
+function useProperties<P extends { [name: string]: any }>(properties: P): P;
 ```
 
 ### useEvent
@@ -267,24 +235,51 @@ interface DispatchEvent<T> {
 function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent<T>;
 ```
 
-## Life cycle hooks
+## Dependency hooks
 
-[→ See the example](/examples/lifecycle.js)
+This library tries to mitigate the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along your state.
+
+When used, these hooks spread dependencies as arguments to their callback, so you can define these callbacks outside the scope of your component This allows you to define a clear list of dependencies, hence avoiding stale closure issues altogether.
+
+They also accept a custom `isEqual` function as last argument that will compare new deps with old deps to confirm that they have changed.
+
+### useMemoize
+
+[→ See the example (1)](/examples/state.js)
+
+[→ See the example (2)](/examples/property.js)
+
+Only recreate the value when the deps change.
+
+If no deps are specified, the value will be created only once and won't ever change.
+Otherwise, the array of deps is spread as arguments of the callback function.
+
+```typescript
+interface IsEqual<D extends any[]> {
+  (deps: D | undefined, oldDeps: D | undefined) => boolean
+}
+
+function useMemoize<T, D extends any[]>(createValue: (...deps: D) => T, deps?: D, isEqual?: IsEqual<D>): T;
+```
 
 ### useEffect
 
+[→ See the example](/examples/lifecycle.js)
+
 This hook will run a callback right after an update (modification of state, property, attribute, etc) has been rendered to the DOM.
 
-Every time the deps change, it will be called again. Providing no deps will make the hook run the callback on every render.
+Every time the deps change, it will be called again. But providing no deps at all will make the hook run the callback on every render.
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
 When the `useEffect` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
 
-For this reason, when your effect has too many dependencies, it is recommended to define your callback function outside the scope of the component, this will limit the amount of bugs coming from stale closure.
-
 ```typescript
 type EffectCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
 
-function useEffect<D extends any[]>(effectCallback: EffectCallback<D>, deps?: D): void;
+function useEffect<D extends any[]>(
+  effectCallback: EffectCallback<D>,
+  deps?: D,
+  isEqual?: IsEqual<D>
+): void;
 ```
