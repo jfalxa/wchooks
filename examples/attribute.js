@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useAttributes, useEvent, useState } from "../wchooks.js";
+import { withHooks, useAttributes, useEvent, useState } from "../wchooks.js";
 
 function ExampleAttributeContainer() {
   const [state, setState] = useState({
@@ -65,7 +65,9 @@ function ExampleAttribute() {
 
 customElements.define(
   "example-attribute",
-  Hooked(ExampleAttribute, render, { observedAttributes: ["num", "str", "bool", "list", "custom"] })
+  withHooks(ExampleAttribute, render, {
+    observedAttributes: ["num", "str", "bool", "list", "custom"],
+  })
 );
 
-customElements.define("example-attribute-container", Hooked(ExampleAttributeContainer, render));
+customElements.define("example-attribute-container", withHooks(ExampleAttributeContainer, render));

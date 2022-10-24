@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { useMemoize, useState, Hooked } from "../wchooks.js";
+import { useMemoize, useState, withHooks } from "../wchooks.js";
 
 function ExampleState() {
   // create a dynamic state that rerenders the element when changed
@@ -28,4 +28,4 @@ function ExampleState() {
   `;
 }
 
-customElements.define("example-state", Hooked(ExampleState, render));
+customElements.define("example-state", withHooks(ExampleState, render));

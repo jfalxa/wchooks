@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { useReducer, Hooked } from "../wchooks.js";
+import { useReducer, withHooks } from "../wchooks.js";
 
 function ExampleReducer() {
   // advanced state initializer for a counter
@@ -43,4 +43,4 @@ function ExampleReducer() {
   `;
 }
 
-customElements.define("example-reducer", Hooked(ExampleReducer, render));
+customElements.define("example-reducer", withHooks(ExampleReducer, render));

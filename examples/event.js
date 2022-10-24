@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useEvent, useState, useEffect } from "../wchooks.js";
+import { withHooks, useEvent, useState, useEffect } from "../wchooks.js";
 
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);
@@ -27,4 +27,4 @@ function ExampleEvent() {
   `;
 }
 
-customElements.define("example-event", Hooked(ExampleEvent, render));
+customElements.define("example-event", withHooks(ExampleEvent, render));

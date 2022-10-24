@@ -1,7 +1,7 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat.js";
-import { Hooked, useEffect, useMemoize, useProperties, useRef, useState } from "../wchooks.js";
+import { withHooks, useEffect, useMemoize, useProperties, useRef, useState } from "../wchooks.js";
 
 function ExamplePropertyContainer() {
   const childRef = useRef();
@@ -80,5 +80,5 @@ function ExampleProperty() {
   `;
 }
 
-customElements.define("example-property", Hooked(ExampleProperty, render));
-customElements.define("example-property-container", Hooked(ExamplePropertyContainer, render));
+customElements.define("example-property", withHooks(ExampleProperty, render));
+customElements.define("example-property-container", withHooks(ExamplePropertyContainer, render));

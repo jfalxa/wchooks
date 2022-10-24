@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { ref } from "https://unpkg.com/lit-html/directives/ref.js";
-import { Hooked, useEffect, useRef } from "../wchooks.js";
+import { withHooks, useEffect, useRef } from "../wchooks.js";
 
 function ExampleDOMRef() {
   // create a static reference to a dom element (or any other value)
@@ -19,4 +19,4 @@ function ExampleDOMRef() {
   `;
 }
 
-customElements.define("example-dom-ref", Hooked(ExampleDOMRef, render));
+customElements.define("example-dom-ref", withHooks(ExampleDOMRef, render));

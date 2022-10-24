@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { Hooked, useProperties, useReducer, useEffect } from "../wchooks.js";
+import { withHooks, useProperties, useReducer, useEffect } from "../wchooks.js";
 
 function ExampleLifeCycle() {
   const [count, add] = useReducer(1, (count, increment) => count + increment);
@@ -65,5 +65,5 @@ function ExampleNestedLifeCycle() {
   `;
 }
 
-customElements.define("example-life-cycle", Hooked(ExampleLifeCycle, render));
-customElements.define("example-nested-life-cycle", Hooked(ExampleNestedLifeCycle, render));
+customElements.define("example-life-cycle", withHooks(ExampleLifeCycle, render));
+customElements.define("example-nested-life-cycle", withHooks(ExampleNestedLifeCycle, render));

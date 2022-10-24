@@ -1,6 +1,6 @@
 import { html, render } from "https://unpkg.com/lit-html";
 import { repeat } from "https://unpkg.com/lit-html/directives/repeat.js";
-import { Hooked } from "../wchooks.js";
+import { withHooks } from "../wchooks.js";
 
 import "./async.js";
 import "./attribute.js";
@@ -44,4 +44,4 @@ function ExampleApp() {
   `;
 }
 
-customElements.define("example-app", Hooked(ExampleApp, render));
+customElements.define("example-app", withHooks(ExampleApp, render));
