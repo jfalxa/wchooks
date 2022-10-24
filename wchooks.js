@@ -4,9 +4,9 @@ const Hooks = createHookContext();
  * Options to customize the behavior of the `Hooked` factory
  *
  * @typedef {Object} HookedOptions
- * @property {typeof HTMLElement=} Element Base element class that your component should extend
- * @property {string[]=} observedAttributes List of attributes that should trigger an update when they change
- * @property {(element: HTMLElement) => ParentNode=} attachRoot Function to pick a rendering root different than the default open `shadowRoot`
+ * @property {typeof HTMLElement} [Element] Base element class that your component should extend
+ * @property {string[]} [observedAttributes] List of attributes that should trigger an update when they change
+ * @property {(element: HTMLElement) => ParentNode} [attachRoot] Function to pick a rendering root different than the default open `shadowRoot`
  */
 
 /**
@@ -15,7 +15,7 @@ const Hooks = createHookContext();
  * @template T
  * @param {() => T} renderer A function that can run hooks and return a template that will be rendered with the passed `render` function
  * @param {(template: T, root: ParentNode) => void} render A function that renders a template genereated by the `renderer` function inside the given element in the DOM
- * @param {HookedOptions=} options Options to customize the behavior of the `Hooked` factory
+ * @param {HookedOptions} [options] Options to customize the behavior of the `Hooked` factory
  * @returns {CustomElementConstructor} A constructor for a custom element that will run hooks
  */
 export function Hooked(renderer, render, options = {}) {
@@ -332,55 +332,32 @@ export function useAsync(asyncFn) {
  *
  * For these attributes to trigger an update when they change, they should be added to the component `observedAttributes`.
  *
- * The attributes default values passed as argument will be used to guess the kind of parsing/serialization needed to interact with the attribute in the DOM.
+ * The given attributes default values will be used to guess the kind of parsing needed to interact with the attribute in the DOM.
  *
- * For example, if we have `{ "my-flag": true }`, the attribute will be shown as `"my-flag"=""` in the DOM.
- * If we have `{ "my-flag": false }`, the attribute will be removed.
+ * For example, if we have `{ "my-flag": true }`, the attribute shown as `"my-flag"=""` in the DOM will be parsed as `true`
+ * but if the attribute isn't found, it will be parsed as `false`.
  *
- * You can also customize the parsing/serialization by passing a function as default value.
- * This function should return an object with 3 keys:
- * - defaultValue: the initial value for this attribute
- * - get: a function that parses the attribute DOM string into the wanted value
- * - set: a function that serializes a value into a string to be written in the DOM
+ * You can also customize the parsing by passing a function as default value.
+ * This function takes the attribute string from the DOM and parses it to the type you need
  *
  * @template {{ [name: string]: any }} A
  * @param {A} attributes A list of default values for some attributes
- * @returns {[Attributes<A>, (values: Partial<Attributes<A>) => void]} A couple with the current attributes value and a function to update them
+ * @returns {Attributes<A>} The current attribute values
  */
 export function useAttributes(attributes) {
   const element = Hooks.getContext();
 
   const index = element.registerHook("attributes", () => {
-    const attributeNames = Object.keys(attributes);
-
     // grap and parse the current list of values for the wanted attributes
-    function getAttributes() {
+    return function getAttributes() {
       return Object.fromEntries(
-        attributeNames.map((name) => [name, getAttribute(element, name, attributes[name])])
+        Object.keys(attributes).map((name) => [name, getAttribute(element, name, attributes[name])])
       );
-    }
-
-    // create a function that can update many attributes at once
-    function setAttributes(values) {
-      const _values = resolve(values, getAttributes());
-      Object.keys(_values).forEach((name) => {
-        if (name in attributes) {
-          setAttribute(element, name, attributes[name], _values[name]);
-        }
-      });
-    }
-
-    // initialize unspecified attributes with default values
-    attributeNames
-      .filter((name) => !element.hasAttribute(name))
-      .forEach((name) => setAttribute(element, name, attributes[name], attributes[name]));
-
-    return [getAttributes, setAttributes];
+    };
   });
 
   // recompute the list of attributes on every render
-  const [getAttributes, setAttributes] = element.getHook(index);
-  return [getAttributes(), setAttributes];
+  return element.getHook(index)();
 }
 
 /**
@@ -394,7 +371,7 @@ export function useAttributes(attributes) {
  *
  * @template {{ [name: string]: any }} P
  * @param {P} properties A list of default values for some properties
- * @returns {[P, (values: Partial<P>) => void]} A couple with the current values of properties and a function to update them
+ * @returns {P} The current property values
  */
 export function useProperties(properties) {
   const element = Hooks.getContext();
@@ -402,32 +379,19 @@ export function useProperties(properties) {
   const index = element.registerHook("properties", () => {
     const propertyNames = Object.keys(properties);
 
-    // build a list of properties based of their value inside the element
-    function getProperties() {
-      return Object.fromEntries(
-        propertyNames.map((name) => [name, name in element ? element[name] : properties[name]])
-      );
-    }
-
-    // create a function that can update many properties at once
-    function setProperties(values) {
-      const _values = resolve(values, getProperties());
-      Object.keys(_values).forEach((name) => {
-        if (name in properties) {
-          element[name] = _values[name];
-        }
-      });
-    }
-
     // start observing listed properties and initialize the unspecified ones with default values
     propertyNames.forEach((name) => observeProperty(element, name, properties[name]));
 
-    return [getProperties, setProperties];
+    // build a list of properties based of their value inside the element
+    return function getProperties() {
+      return Object.fromEntries(
+        propertyNames.map((name) => [name, name in element ? element[name] : properties[name]])
+      );
+    };
   });
 
   // recompute the list of properties every time the component is rendered
-  const [getProperties, setProperties] = element.getHook(index);
-  return [getProperties(), setProperties];
+  return element.getHook(index)();
 }
 
 /**
@@ -443,7 +407,7 @@ export function useProperties(properties) {
  *
  * @template T
  * @param {string} event The name of the event to dispatch
- * @param {CustomEventInit<T>=} options The options to dispatch the event with
+ * @param {CustomEventInit<T>} [options] The options to dispatch the event with
  * @returns {DispatchEvent<T>} A function to dispatch the wanted event
  */
 export function useEvent(event, options) {
@@ -482,8 +446,8 @@ export function useEvent(event, options) {
  *
  * @template {any[]} D
  * @param {EffectCallback<D>} effectCallback A callback to be run after an update
- * @param {D=} deps A list of deps to limit when the callback will be called
- * @param {IsEqual<D>=} isEqual A function to check if deps have changed
+ * @param {D} [deps] A list of deps to limit when the callback will be called
+ * @param {IsEqual<D>} [isEqual] A function to check if deps have changed
  */
 export function useEffect(effectCallback, deps, isEqual = isShallowEqual) {
   const element = Hooks.getContext();
@@ -532,30 +496,7 @@ function getAttribute(element, name, defaultValue) {
   if (attribute === null) return defaultValue;
   if (type === "string") return attribute;
   if (type === "number") return parseInt(attribute, 10);
-  if (type === "function") return defaultValue().get(attribute);
   else return JSON.parse(attribute);
-}
-
-function setAttribute(element, name, defaultValue, value) {
-  const type = typeof defaultValue;
-
-  if (type === "function") {
-    const builder = defaultValue();
-    const _value = value === defaultValue ? builder.defaultValue : value;
-    return element.setAttribute(name, builder.set(_value));
-  }
-
-  if (type === "boolean") {
-    if (value) return element.setAttribute(name, "");
-    else return element.removeAttribute(name);
-  }
-
-  let attribute = "";
-  if (type === "string") attribute = value;
-  else if (type === "number") attribute = value.toString();
-  else attribute = JSON.stringify(value);
-
-  return element.setAttribute(name, attribute);
 }
 
 function createHookContext() {
@@ -573,8 +514,8 @@ function createHookContext() {
 
 /**
  * @template {any[]} D
- * @param {D=} deps
- * @param {D=} oldDeps
+ * @param {D | undefined} deps
+ * @param {D | undefined} oldDeps
  * @returns {boolean}
  */
 function isShallowEqual(deps, oldDeps) {
