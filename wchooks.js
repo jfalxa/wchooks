@@ -57,7 +57,7 @@ export function Hooked(renderer, render, options = {}) {
     };
 
     setHook = (index, data) => {
-      this.hooks[index].data = data;
+      this.hooks[index].data = resolve(data, this.getHook(index));
     };
 
     registerHook = (type, createData = () => {}) => {
@@ -196,41 +196,6 @@ export function useReducer(initialState, reducer) {
  */
 export function useState(createState) {
   return useReducer(resolve(createState), (oldState, newState) => resolve(newState, oldState));
-}
-
-/**
- * Only recreate the value when the deps change.
- *
- * If no deps are specified, the value will be created only once and won't ever change.
- *
- * The array of deps is otherwise spread as arguments of the callback function.
- * This allows you to define your callback function outside the scope of your component,
- * hence allowing you to enforce a clear list of deps for this function.
- *
- * You can also specify a custom `isEqual` function as last argument
- * that will compare new deps with old deps in order to confirm that they have changed.
- *
- * @template T
- * @template {any[]} D
- * @param {(...deps: D) => T} createValue A function that will create for the given deps
- * @param {D} deps A list of deps that will cause the hook to recreate the value when they change
- * @param {IsEqual<D>} isEqual A function to compare two successive versions of deps
- * @returns {T} The memoized value
- */
-export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
-  const element = Hooks.getContext();
-  const index = element.registerHook("memoize", () => ({ value: createValue(...deps) }));
-
-  // get previously memoized value and associated deps
-  const previous = element.getHook(index);
-
-  // update hook value only when deps change
-  if (!isEqual(deps, previous.deps)) {
-    element.setHook(index, { deps, value: createValue(...deps) });
-  }
-
-  // extrat the actual value from current hook cache
-  return element.getHook(index).value;
 }
 
 /**
@@ -400,6 +365,55 @@ export function useEvent(event, options) {
 }
 
 /**
+ * A function to check if two different list of deps are actually the same
+ *
+ * @template {any[]} D
+ * @typedef {(D | undefined, D | undefined) => boolean} IsEqual
+ */
+
+/**
+ * Only recreate the value when the deps change.
+ *
+ * If no deps are specified, the value will be created only once and won't ever change.
+ *
+ * The array of deps is otherwise spread as arguments of the callback function.
+ * This allows you to define your callback function outside the scope of your component,
+ * hence allowing you to enforce a clear list of deps for this function.
+ *
+ * You can also specify a custom `isEqual` function as last argument
+ * that will compare new deps with old deps in order to confirm that they have changed.
+ *
+ * @template T
+ * @template {any[]} D
+ * @param {(...deps: D) => T} createValue A function that will create for the given deps
+ * @param {D} deps A list of deps that will cause the hook to recreate the value when they change
+ * @param {IsEqual<D>} isEqual A function to compare two successive versions of deps
+ * @returns {T} The memoized value
+ */
+export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
+  const element = Hooks.getContext();
+
+  const index = element.registerHook("memoize", () => {
+    function getValue() {
+      const hook = element.getHook(index);
+      if (isEqual(hook.deps, hook.oldDeps)) return hook.value;
+
+      const value = createValue(...(hook.deps ?? []));
+      element.setHook(index, { getValue, value, oldDeps: hook.deps });
+      return value;
+    }
+
+    return { getValue };
+  });
+
+  const hook = element.getHook(index);
+  // update the list of deps on every render so the callback can check them later
+  element.setHook(index, (previous) => ({ ...previous, deps }));
+  // return the memoized value
+  return hook.getValue();
+}
+
+/**
  * A callback to a lifecycle event.
  *
  * @template {any[]} D
@@ -426,20 +440,22 @@ export function useEvent(event, options) {
 export function useEffect(effectCallback, deps, isEqual = isShallowEqual) {
   const element = Hooks.getContext();
 
-  const index = element.registerHook("effect", () => ({}));
-  const previous = element.getHook(index);
-
-  // rerun side effect only if deps have changed
-  function callback() {
-    if (!isEqual(deps, previous.deps)) {
-      if (previous.clearCallback) previous.clearCallback();
-      const clearCallback = effectCallback(element, ...(deps ?? []));
-      element.setHook(index, { callback, clearCallback, deps });
+  const index = element.registerHook("effect", () => {
+    function callback() {
+      const hook = element.getHook(index);
+      // rerun side effect only if deps have changed
+      if (!isEqual(hook.deps, hook.oldDeps)) {
+        if (hook.clearCallback) hook.clearCallback();
+        const clearCallback = effectCallback(element, ...(hook.deps ?? []));
+        element.setHook(index, { callback, clearCallback, olDeps: hook.deps });
+      }
     }
-  }
 
-  // update the callback function on every render so it's fresh when it's called
-  element.setHook(index, { callback, deps: previous.deps });
+    return { callback };
+  });
+
+  // update the list of deps on every render so the callback can check them later
+  element.setHook(index, (previous) => ({ ...previous, deps }));
 }
 
 function observeProperty(element, property, defaultValue) {
@@ -486,30 +502,12 @@ function createHookContext() {
   };
 }
 
-/**
- * @template {any[]} D
- * @typedef {typeof isShallowEqual} IsEqual
- */
-
-/**
- * @template {any[]} D
- * @param {D | undefined} deps
- * @param {D | undefined} oldDeps
- * @returns {boolean}
- */
 function isShallowEqual(deps, oldDeps) {
   if (deps === undefined || oldDeps === undefined) return false;
   if (deps.length !== oldDeps.length) return false;
   else return deps.every((_, i) => deps[i] === oldDeps[i]);
 }
 
-/**
- * @template T
- * @template {any[]} A
- * @param {T | ((...args: A) => T)} data
- * @param  {A} oldData
- * @returns {T}
- */
 function resolve(data, ...oldData) {
   return typeof data === "function" ? data(...oldData) : data;
 }
