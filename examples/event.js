@@ -4,10 +4,10 @@ import { withHooks, useEvent, useState, useEffect } from "../wchooks.js";
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);
 
-  // create a function that dispatches the "custom-event" event
+  // create a function that dispatches the "myevent" event
   const dispatchEvent = useEvent("myevent", { bubbles: true });
 
-  // add a listener that reacts to the "custom-event" event
+  // add a listener that reacts to the "myevent" event
   useEffect((element) => {
     const increment = () => setCounter((counter) => counter + 1);
     element.addEventListener("myevent", increment);
