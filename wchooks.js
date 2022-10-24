@@ -304,30 +304,6 @@ export function useAsync(asyncFn) {
 }
 
 /**
- * A custom attribute getter/setter
- *
- * @template T
- * @typedef {Object} CustomAttribute
- * @property {T} defaultValue Default value of the attribute during initialization
- * @property {(attribute: string) => T} get Parse the attribute DOM string into the wanted type
- * @property {(value: T) => string} set Stringify the value into a string for the DOM
- */
-
-/**
- * Extract the value type from an attribute's default value
- *
- * @template A
- * @typedef {A extends (() => CustomAttribute<infer T>) ? T : A} CustomAttributeValue
- */
-
-/**
- * Actual type of attributes, with custom ones flattened.
- *
- * @template {{[name: string]: any}} A
- * @typedef {{ [name in keyof A]: CustomAttributeValue<A[name]>}} Attributes
- */
-
-/**
  * Setup many attributes on a component.
  *
  * For these attributes to trigger an update when they change, they should be added to the component `observedAttributes`.
@@ -342,7 +318,7 @@ export function useAsync(asyncFn) {
  *
  * @template {{ [name: string]: any }} A
  * @param {A} attributes A list of default values for some attributes
- * @returns {Attributes<A>} The current attribute values
+ * @returns {A} The current attribute values on the element
  */
 export function useAttributes(attributes) {
   const element = Hooks.getContext();

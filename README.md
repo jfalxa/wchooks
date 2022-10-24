@@ -197,9 +197,7 @@ For example, if we have `{ "my-flag": true }`, the attribute will be shown as `"
 If we have `{ "my-flag": false }`, the attribute will be removed.
 
 ```typescript
-// The Attributes type flattens the list of default values to get the actual types that will be parsed from the DOM.
-
-function useAttributes<A extends { [name: string]: any }>(initialAttributes: A): Attributes<A>;
+function useAttributes<A extends { [name: string]: any }>(initialAttributes: A): A;
 ```
 
 ### useProperties
@@ -237,7 +235,7 @@ function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent
 
 ## Dependency hooks
 
-This library tries to mitigate the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along your state.
+This library tries to mitigate the dependency tracking issues of React's hooks by offering only two hooks that you should go to whenever you want something to change along with your state.
 
 When used, these hooks spread dependencies as arguments to their callback, so you can define these callbacks outside the scope of your component This allows you to define a clear list of dependencies, hence avoiding stale closure issues altogether.
 
