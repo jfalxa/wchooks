@@ -42,25 +42,25 @@ function ExampleAttribute() {
       id="num"
       type="number"
       .value=${String(attributes["num"])}
-      @input=${(e) => events.change({ detail: ["num", e.target.value] })}
+      @input=${(e) => events.change(["num", e.target.value])}
     />
     <input
       id="str"
       type="text"
       .value=${attributes["str"]}
-      @input=${(e) => events.change({ detail: ["str", e.target.value] })}
+      @input=${(e) => events.change(["str", e.target.value])}
     />
     <input
       id="bool"
       type="checkbox"
       .checked=${attributes["bool"]}
-      @change=${(e) => events.change({ detail: ["bool", e.target.checked] })}
+      @change=${(e) => events.change(["bool", e.target.checked])}
     />
     <input
       id="list"
       type="button"
       value="Append 0 to list"
-      @click=${() => events.change({ detail: ["list", [...attributes["list"], 0]] })}
+      @click=${() => events.change(["list", [...attributes["list"], 0]])}
     />
   `;
 }

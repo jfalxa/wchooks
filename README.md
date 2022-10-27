@@ -232,11 +232,11 @@ function useProperties<P extends { [name: string]: any }>(properties: P): P;
 
 Create event dispatchers for the given events with their default options.
 
-These options can still be overriden when calling the dispatchers.
+The first argument of the dispatcher is the detail of your custom event, the second allows you to override the previously defined default options.
 
 ```typescript
 interface DispatchEvent<T> {
-  (options?: CustomEventInit<T>): CustomEvent;
+  (detail?: T, options?: CustomEventInit<T>): CustomEvent;
 }
 
 function useEvents<E extends string>(events: { [event in E]: CustomEventInit<any>; }): { [event in E]: DispatchEvent<any>; }

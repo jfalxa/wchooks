@@ -5,11 +5,13 @@ function ExampleEvent() {
   const [counter, setCounter] = useState(0);
 
   // create a function that dispatches the "myevent" event
-  const events = useEvents({ myevent: { bubbles: true } });
+  const events = useEvents({
+    myevent: { detail: 0 }, // we set the default value of the event detail to 0 in case it's not specified
+  });
 
   // add a listener that reacts to the "myevent" event
   useEffect((element) => {
-    const increment = () => setCounter((counter) => counter + 1);
+    const increment = (e) => setCounter((counter) => counter + e.detail); // we grab the detail from the event to increment
     element.addEventListener("myevent", increment);
     return () => element.removeEventListener("myevent", increment);
   }, []);
@@ -19,9 +21,7 @@ function ExampleEvent() {
       <legend>
         <b>useEvents</b>
       </legend>
-      <button id="dispatch" @click=${() => events.myevent({ detail: new Date() })}>
-        Dispatch custom event
-      </button>
+      <button id="dispatch" @click=${() => events.myevent(1)}>Dispatch custom event</button>
       <span>→ <b id="counter">${counter}</b> events dispatched</span>
     </fieldset>
   `;

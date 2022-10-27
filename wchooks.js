@@ -337,12 +337,14 @@ export function useProperties(properties) {
  * A function that dispatches an event with the given options.
  *
  * @template T
- * @typedef {(options?: CustomEventInit<T>) => CustomEvent<T>} DispatchEvent
+ * @typedef {(detail?: T, options?: CustomEventInit<T>) => CustomEvent<T>} DispatchEvent
  */
 
 /**
  * Create event dispatchers for the given events with their default options.
- * These options can still be overriden when calling the dispatchers.
+ *
+ * The first argument of the dispatcher is the detail of your custom event,
+ * the second allows you to override the previously defined default options.
  *
  * @template {string} E
  * @param {{ [event in E]: CustomEventInit<any> }} events The events you want to dispatch with their default options
@@ -354,8 +356,9 @@ export function useEvents(events) {
   const index = element.registerHook("events", () => {
     // create a function that dispatches the given event with options
     function createDispatchEvent(event, defaultOptions) {
-      return (options) => {
-        const _event = new CustomEvent(event, { ...defaultOptions, ...options });
+      return (detail, options) => {
+        const _detail = detail ?? options.detail ?? defaultOptions.detail;
+        const _event = new CustomEvent(event, { ...defaultOptions, ...options, detail: _detail });
         element.dispatchEvent(_event);
         return _event;
       };
