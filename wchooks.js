@@ -355,8 +355,8 @@ export function useEvents(events) {
 
   const index = element.registerHook("events", () => {
     // create a function that dispatches the given event with options
-    function createDispatchEvent(event, defaultOptions) {
-      return (detail, options) => {
+    function createDispatchEvent(event, defaultOptions = {}) {
+      return (detail, options = {}) => {
         const _detail = detail ?? options.detail ?? defaultOptions.detail;
         const _event = new CustomEvent(event, { ...defaultOptions, ...options, detail: _detail });
         element.dispatchEvent(_event);
