@@ -1,11 +1,11 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { withHooks, useEvent, useState, useEffect } from "../wchooks.js";
+import { withHooks, useEvents, useState, useEffect } from "../wchooks.js";
 
 function ExampleEvent() {
   const [counter, setCounter] = useState(0);
 
   // create a function that dispatches the "myevent" event
-  const dispatchEvent = useEvent("myevent", { bubbles: true });
+  const events = useEvents({ myevent: { bubbles: true } });
 
   // add a listener that reacts to the "myevent" event
   useEffect((element) => {
@@ -17,9 +17,9 @@ function ExampleEvent() {
   return html`
     <fieldset>
       <legend>
-        <b>useEvent</b>
+        <b>useEvents</b>
       </legend>
-      <button id="dispatch" @click=${() => dispatchEvent({ detail: new Date() })}>
+      <button id="dispatch" @click=${() => events.myevent({ detail: new Date() })}>
         Dispatch custom event
       </button>
       <span>→ <b id="counter">${counter}</b> events dispatched</span>

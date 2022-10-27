@@ -68,7 +68,7 @@ customElements.define("my-counter", withHooks(Counter, render));
 
 - [useAttributes](#useattributes)
 - [useProperties](#useproperties)
-- [useEvent](#useevent)
+- [useEvents](#useevents)
 
 ### Dependency hooks
 
@@ -226,20 +226,20 @@ If your property is defined as a function, it will automatically be bound to the
 function useProperties<P extends { [name: string]: any }>(properties: P): P;
 ```
 
-### useEvent
+### useEvents
 
 [→ See the example](/examples/event.js)
 
-Create an event dispatcher function that when called will dispatch the specified event with the given options.
+Create event dispatchers for the given events with their default options.
 
-These options can be overriden when calling the dispatcher.
+These options can still be overriden when calling the dispatchers.
 
 ```typescript
 interface DispatchEvent<T> {
   (options?: CustomEventInit<T>): CustomEvent;
 }
 
-function useEvent<T>(event: string, options?: CustomEventInit<T>): DispatchEvent<T>;
+function useEvents<E extends string>(events: { [event in E]: CustomEventInit<any>; }): { [event in E]: DispatchEvent<any>; }
 ```
 
 ## Dependency hooks

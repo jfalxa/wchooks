@@ -1,5 +1,5 @@
 import { html, render } from "https://unpkg.com/lit-html";
-import { withHooks, useAttributes, useEvent, useState } from "../wchooks.js";
+import { withHooks, useAttributes, useEvents, useState } from "../wchooks.js";
 
 function ExampleAttributeContainer() {
   const [state, setState] = useState({
@@ -33,32 +33,34 @@ function ExampleAttribute() {
     list: [],
   });
 
-  const dispatchChange = useEvent("change");
+  const events = useEvents({
+    change: { detail: ["", undefined] },
+  });
 
   return html`
     <input
       id="num"
       type="number"
       .value=${String(attributes["num"])}
-      @input=${(e) => dispatchChange({ detail: ["num", e.target.value] })}
+      @input=${(e) => events.change({ detail: ["num", e.target.value] })}
     />
     <input
       id="str"
       type="text"
       .value=${attributes["str"]}
-      @input=${(e) => dispatchChange({ detail: ["str", e.target.value] })}
+      @input=${(e) => events.change({ detail: ["str", e.target.value] })}
     />
     <input
       id="bool"
       type="checkbox"
       .checked=${attributes["bool"]}
-      @change=${(e) => dispatchChange({ detail: ["bool", e.target.checked] })}
+      @change=${(e) => events.change({ detail: ["bool", e.target.checked] })}
     />
     <input
       id="list"
       type="button"
       value="Append 0 to list"
-      @click=${() => dispatchChange({ detail: ["list", [...attributes["list"], 0]] })}
+      @click=${() => events.change({ detail: ["list", [...attributes["list"], 0]] })}
     />
   `;
 }

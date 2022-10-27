@@ -341,24 +341,29 @@ export function useProperties(properties) {
  */
 
 /**
- * Create an event dispatcher function that when called will dispatch the specified event with the given options.
- * These options can still be overriden when calling the dispatcher.
+ * Create event dispatchers for the given events with their default options.
+ * These options can still be overriden when calling the dispatchers.
  *
- * @template T
- * @param {string} event The name of the event to dispatch
- * @param {CustomEventInit<T>} [options] The options to dispatch the event with
- * @returns {DispatchEvent<T>} A function to dispatch the wanted event
+ * @template {string} E
+ * @param {{ [event in E]: CustomEventInit<any> }} events The events you want to dispatch with their default options
+ * @returns {{ [event in E]: DispatchEvent<T>}} A function to dispatch the wanted event
  */
-export function useEvent(event, options) {
+export function useEvents(events) {
   const element = Hooks.getContext();
 
-  const index = element.registerHook("event", () => {
-    // create a function that dispatches the event configured by this hook
-    return function dispatchEvent(eventOptions) {
-      const _event = new CustomEvent(event, { ...options, ...eventOptions });
-      element.dispatchEvent(_event);
-      return _event;
-    };
+  const index = element.registerHook("events", () => {
+    // create a function that dispatches the given event with options
+    function createDispatchEvent(event, defaultOptions) {
+      return (options) => {
+        const _event = new CustomEvent(event, { ...defaultOptions, ...options });
+        element.dispatchEvent(_event);
+        return _event;
+      };
+    }
+
+    return Object.fromEntries(
+      Object.entries(events).map(([event, options]) => [event, createDispatchEvent(event, options)])
+    );
   });
 
   return element.getHook(index);
