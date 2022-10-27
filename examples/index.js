@@ -12,8 +12,8 @@ import "./state.js";
 import "./reducer.js";
 
 function ExampleApp() {
-  function logLifeCycle(step, element) {
-    console.log("[lifecycle]", element, step);
+  function logLifeCycle(step) {
+    console.log("[lifecycle]", step);
   }
 
   return html`
@@ -36,7 +36,7 @@ function ExampleApp() {
       <example-state></example-state>
       <example-reducer></example-reducer>
       <example-async></example-async>
-      <example-event></example-event>
+      <example-event-container></example-event-container>
       <example-attribute-container></example-attribute-container>
       <example-property-container></example-property-container>
       <example-life-cycle .onLifeCycle=${logLifeCycle}></example-life-cycle>

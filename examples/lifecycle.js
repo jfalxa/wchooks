@@ -10,9 +10,9 @@ function ExampleLifeCycle() {
   useEffect(
     // [!] the current DOM element is _always_ passed as first argument
     // [!] notice that the dep array is spread as the last arguments of the lifecycle callback function
-    (element, count) => {
-      props.onLifeCycle(`useEffect ${count}.`, element);
-      return () => props.onLifeCycle(`useEffect ${count}. (cleared)`, element);
+    (count) => {
+      props.onLifeCycle(`useEffect ${count}.`);
+      return () => props.onLifeCycle(`useEffect ${count}. (cleared)`);
     },
     [count]
   );
@@ -43,9 +43,9 @@ function ExampleNestedLifeCycle() {
   const props = useProperties({ count: 0, onLifeCycle: undefined });
 
   useEffect(
-    (element, count) => {
-      props.onLifeCycle(`useEffect ${count}.`, element);
-      return () => props.onLifeCycle(`useEffect ${count}. (cleared)`, element);
+    (count) => {
+      props.onLifeCycle(`child useEffect ${count}.`);
+      return () => props.onLifeCycle(`child useEffect ${count}. (cleared)`);
     },
     [props.count]
   );

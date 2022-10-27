@@ -285,10 +285,10 @@ Every time the deps change, it will be called again. But providing no deps at al
 
 In order to clear whatever was setup in the side effect, your callback should return a function that takes care of this clean up.
 
-When the `useEffect` hook is invoked, the current deps will be spread as the arguments of the callback function, along with a reference to the element the hook is bound to.
+When the `useEffect` hook is invoked, the current deps will be spread as the arguments of the callback function.
 
 ```typescript
-type EffectCallback<D extends any[]> = (element: HTMLElement, ...deps: D) => void | (() => void);
+type EffectCallback<D extends any[]> = (...deps: D) => void | (() => void);
 
 function useEffect<D extends any[]>(
   effectCallback: EffectCallback<D>,
