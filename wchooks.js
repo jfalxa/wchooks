@@ -508,6 +508,6 @@ function isShallowEqual(deps, oldDeps) {
   else return deps.every((_, i) => deps[i] === oldDeps[i]);
 }
 
-function resolve(data, ...oldData) {
-  return typeof data === "function" ? data(...oldData) : data;
+function resolve(data, ...args) {
+  return typeof data === "function" ? data(...args) : data;
 }
