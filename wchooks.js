@@ -383,10 +383,7 @@ export function useEvents(events) {
  * Only recreate the value when the deps change.
  *
  * If no deps are specified, the value will be created only once and won't ever change.
- *
  * The array of deps is otherwise spread as arguments of the callback function.
- * This allows you to define your callback function outside the scope of your component,
- * hence allowing you to enforce a clear list of deps for this function.
  *
  * You can also specify a custom `isEqual` function as last argument
  * that will compare new deps with old deps in order to confirm that they have changed.
@@ -425,17 +422,14 @@ export function useMemoize(createValue, deps = [], isEqual = isShallowEqual) {
  * A callback to a lifecycle event.
  *
  * @template {any[]} D
- * @typedef {(element: HTMLElement, ...deps: D) => void | (() => void)} EffectCallback
+ * @typedef {(...deps: D) => void | (() => void)} EffectCallback
  */
 
 /**
  * A lifecycle hook that will run after a batch of update has been rendered to the DOM.
  *
  * If no deps are specified, the callback will be run after every update.
- *
  * The array of deps is otherwise spread as arguments of the callback function.
- * This allows you to define your callback function outside the scope of your component,
- * hence allowing you to enforce a clear list of deps for this function.
  *
  * You can also specify a custom `isEqual` function as last argument
  * that will compare new deps with old deps in order to confirm that they have changed.
@@ -454,7 +448,7 @@ export function useEffect(effectCallback, deps, isEqual = isShallowEqual) {
       // rerun side effect only if deps have changed
       if (!isEqual(hook.deps, hook.oldDeps)) {
         if (hook.clearEffect) hook.clearEffect();
-        const clearEffect = effectCallback(element, ...(hook.deps ?? []));
+        const clearEffect = effectCallback(...(hook.deps ?? []));
         element.setHook(index, { effect, clearEffect, olDeps: hook.deps });
       }
     }
