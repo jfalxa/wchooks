@@ -35,7 +35,7 @@ import { withHooks, useState, useEffect } from "wchooks";
 const Counter = () => {
   const [counter, setCounter] = useState(0);
 
-  useEffect(() => {
+  useEffect((counter) => {
     console.log("counter rendered:", counter);
   }, [counter]);
 
